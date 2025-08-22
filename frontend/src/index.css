@@ -1,0 +1,348 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles and CSS custom properties */
+@layer base {
+  :root {
+    --tg-bg-color: #ffffff;
+    --tg-text-color: #000000;
+    --tg-hint-color: #999999;
+    --tg-link-color: #007AFF;
+    --tg-button-color: #007AFF;
+    --tg-button-text-color: #ffffff;
+    --tg-secondary-bg-color: #f1f1f1;
+  }
+
+  .dark {
+    --tg-bg-color: #1C1C1E;
+    --tg-text-color: #ffffff;
+    --tg-hint-color: #8E8E93;
+    --tg-link-color: #007AFF;
+    --tg-button-color: #007AFF;
+    --tg-button-text-color: #ffffff;
+    --tg-secondary-bg-color: #2C2C2E;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-tg-bg text-tg-text;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Prevent zoom on input focus for iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Remove default focus styles and add custom ones */
+  *:focus {
+    outline: none;
+  }
+
+  button:focus-visible,
+  [role="button"]:focus-visible {
+    @apply ring-2 ring-primary-500 ring-offset-2 ring-offset-tg-bg;
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* Container utilities */
+  .container {
+    @apply w-full mx-auto px-4;
+  }
+
+  /* Custom button variants */
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-medium;
+    @apply hover:from-primary-600 hover:to-primary-700 hover:shadow-hard;
+    @apply active:shadow-medium disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-all duration-200 rounded-xl font-semibold;
+  }
+
+  .btn-secondary {
+    @apply bg-tg-secondary-bg text-tg-text border border-tg-secondary-bg;
+    @apply hover:bg-opacity-80 hover:shadow-soft;
+    @apply active:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply transition-all duration-200 rounded-xl font-semibold;
+  }
+
+  .btn-danger {
+    @apply bg-error-50 text-error-700 border border-error-200;
+    @apply hover:bg-error-100 hover:shadow-soft;
+    @apply dark:bg-error-900/20 dark:text-error-300 dark:border-error-700/50;
+    @apply dark:hover:bg-error-900/30;
+    @apply transition-all duration-200 rounded-xl font-medium;
+  }
+
+  /* Status card variants */
+  .status-card {
+    @apply border rounded-2xl p-5 transition-all duration-200 bg-tg-secondary-bg;
+  }
+
+  .status-card-success {
+    @apply biometric-success;
+  }
+
+  .status-card-warning {
+    @apply biometric-warning;
+  }
+
+  .status-card-error {
+    @apply biometric-error;
+  }
+
+  /* Icon utilities */
+  .icon-sm {
+    @apply w-4 h-4;
+  }
+
+  .icon-md {
+    @apply w-5 h-5;
+  }
+
+  .icon-lg {
+    @apply w-6 h-6;
+  }
+
+  .icon-xl {
+    @apply w-8 h-8;
+  }
+
+  /* Loading states */
+  .loading-spinner {
+    @apply animate-spin rounded-full border-2 border-transparent border-t-current;
+  }
+
+  .loading-dots {
+    @apply flex items-center justify-center gap-1;
+  }
+
+  .loading-dots > div {
+    @apply w-2 h-2 bg-current rounded-full animate-bounce;
+  }
+
+  .loading-dots > div:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  .loading-dots > div:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+
+  /* Glass morphism effects */
+  .glass-light {
+    @apply backdrop-blur-sm bg-white/60 border border-white/20;
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-md bg-white/80 border border-white/30;
+    @apply dark:bg-black/80 dark:border-white/10;
+  }
+}
+
+/* Utility classes */
+@layer utilities {
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out forwards;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s infinite;
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-transform duration-200 hover:-translate-y-1 hover:shadow-hard;
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
+  }
+
+  /* Text utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Safe area utilities for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Scrollbar styling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800 rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+}
+
+/* Keyframe animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(-2%);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: none;
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+}
+
+/* Responsive design improvements */
+@media (max-width: 390px) {
+  .container {
+    @apply px-3;
+  }
+
+  .status-card {
+    @apply p-4;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply text-sm py-3;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .status-card {
+    @apply border-2;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply border-2;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-spin {
+    animation: none;
+  }
+
+  .animate-bounce {
+    animation: none;
+  }
+
+  .animate-bounce-subtle {
+    animation: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    @apply shadow-none border border-gray-300;
+  }
+
+  .status-card {
+    @apply shadow-none;
+  }
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+  .dark {
+    color-scheme: dark;
+  }
+}
