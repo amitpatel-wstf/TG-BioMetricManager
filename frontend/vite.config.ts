@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 export default defineConfig({
-
   // Base URL for deployment (adjust for your hosting)
   base: './',
   
@@ -63,8 +63,9 @@ export default defineConfig({
     format: 'esm',
   },
   
-  // Plugin configuration
+  // Additional plugins
   plugins: [
+    react(),
     // Custom plugin to add manifest.json
     {
       name: 'add-manifest',

@@ -124,7 +124,7 @@ export const useBiometric = (): UseBiometricReturn => {
           { reason: 'Set up biometric authentication for secure access' },
           (success, token) => {
             clearTimeout(timeout)
-            resolve({ success, token })
+            resolve({ success, token: token || undefined })
           }
         )
       })
@@ -179,7 +179,7 @@ export const useBiometric = (): UseBiometricReturn => {
           { reason: 'Authenticate to verify your identity' },
           (success, token) => {
             clearTimeout(timeout)
-            resolve({ success, token })
+            resolve({ success, token: token || undefined })
           }
         )
       })

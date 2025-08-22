@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { useBiometric } from './hooks/useBiometric'
-import { BiometricStatus } from './components/BiometricStatus'
-import { BiometricActions } from './components/BiometricActions'
+import { useBiometric } from './hooks/useBioMetric'
+import { BiometricActions } from './components/BioMetricActions'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { LoadingSpinner } from './components/LoadingSpinner'
@@ -9,6 +8,7 @@ import { ErrorDisplay } from './components/ErrorDisplay'
 import { cn } from './utils/cn'
 import type { BiometricData } from './types/biometric'
 import { useTelegramWebApp } from './hooks/useTelegramWebApp'
+import { BiometricStatus } from './components/BiometricStatus'
 
 const App: React.FC = () => {
   const [isInitialized, setIsInitialized] = useState(false)
@@ -180,14 +180,14 @@ const App: React.FC = () => {
     )}>
       <div className="container mx-auto max-w-md px-4 py-6 min-h-screen flex flex-col">
         {/* Header */}
-        <Header user={user} />
+        <Header user={user || undefined} />
 
         {/* Main Content */}
         <main className="flex-1 space-y-6">
           {/* Biometric Status */}
           <BiometricStatus
             status={status}
-            biometricManager={biometricManager}
+            biometricManager={biometricManager || undefined}
             className="animate-fade-in"
           />
 
@@ -215,7 +215,7 @@ const App: React.FC = () => {
           {/* Biometric Actions */}
           <BiometricActions
             status={status}
-            biometricManager={biometricManager}
+            biometricManager={biometricManager || undefined}
             onRequestAccess={requestAccess}
             onSetup={setupBiometric}
             onAuthenticate={authenticate}
