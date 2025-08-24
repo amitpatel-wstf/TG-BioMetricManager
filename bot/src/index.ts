@@ -308,22 +308,51 @@ class TelegramBiometricBot {
     try {
       const urlParams = new URLSearchParams(initData);
       const hash = urlParams.get('hash');
+      
+      if (!hash) {
+        console.error('No hash found in initData');
+        return false;
+      }
+
+      // Remove hash from params for validation
       urlParams.delete('hash');
 
+      // Create data-check-string: sort alphabetically and join with \n
       const dataCheckString = Array.from(urlParams.entries())
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([key, value]) => `${key}=${value}`)
         .join('\n');
 
+      console.log('Data check string:', dataCheckString);
+
+      // Step 1: Create secret key = HMAC_SHA256(bot_token, "WebAppData")
       const secretKey = crypto
         .createHmac('sha256', 'WebAppData')
         .update(this.botToken)
         .digest();
 
+      // Step 2: Calculate hash = HMAC_SHA256(data_check_string, secret_key)
       const calculatedHash = crypto
         .createHmac('sha256', secretKey)
         .update(dataCheckString)
         .digest('hex');
+
+      console.log('Expected hash:', hash);
+      console.log('Calculated hash:', calculatedHash);
+
+      // Check auth_date to prevent use of outdated data (optional but recommended)
+      const authDate = urlParams.get('auth_date');
+      if (authDate) {
+        const authTimestamp = parseInt(authDate);
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        const timeDiff = currentTimestamp - authTimestamp;
+        
+        // Reject data older than 24 hours (86400 seconds)
+        if (timeDiff > 86400) {
+          console.error('Auth date is too old:', timeDiff, 'seconds');
+          return false;
+        }
+      }
 
       return calculatedHash === hash;
     } catch (error) {

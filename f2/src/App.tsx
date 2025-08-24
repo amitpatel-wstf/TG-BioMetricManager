@@ -6,73 +6,110 @@ interface TelegramData {
   [key: string]: any
 }
 
+// Extend Window interface to include Telegram
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp?: {
+        initData?: string;
+      };
+    };
+  }
+}
+
 function App() {
   const [telegramData, setTelegramData] = useState<TelegramData>({})
   const [isReady, setIsReady] = useState(false)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+
+  // Simple check for required Telegram values
+  const checkTelegramValues = () => {
+    // Check if we have valid Telegram init data
+    const hasInitData = WebApp.initData && WebApp.initData.length > 0
+    const hasValidUser = WebApp.initDataUnsafe?.user?.id
+    const isInTelegram = window.Telegram?.WebApp?.initData
+    
+    // Additional check for Telegram environment
+    const userAgent = navigator.userAgent.toLowerCase()
+    const isTelegramApp = userAgent.includes('telegram') || 
+                         userAgent.includes('tdesktop') || 
+                         hasInitData || 
+                         hasValidUser ||
+                         isInTelegram
+    
+    return isTelegramApp
+  }
 
   useEffect(() => {
-    // Initialize Telegram WebApp
-    WebApp.ready()
-    setIsReady(true)
+    // Simple check for Telegram values existence
+    const authorized = checkTelegramValues()
+    setIsAuthorized(Boolean(authorized))
 
-    // Collect all Telegram WebApp data
-    const data: TelegramData = {
-      // Basic WebApp info
-      version: WebApp.version,
-      platform: WebApp.platform,
-      colorScheme: WebApp.colorScheme,
-      themeParams: WebApp.themeParams,
-      isExpanded: WebApp.isExpanded,
-      viewportHeight: WebApp.viewportHeight,
-      viewportStableHeight: WebApp.viewportStableHeight,
-      headerColor: WebApp.headerColor,
-      backgroundColor: WebApp.backgroundColor,
-      isClosingConfirmationEnabled: WebApp.isClosingConfirmationEnabled,
-      isVerticalSwipesEnabled: WebApp.isVerticalSwipesEnabled,
+    if (authorized) {
+      // Initialize Telegram WebApp
+      WebApp.ready()
       
-      // User data
-      initData: WebApp.initData,
-      initDataUnsafe: WebApp.initDataUnsafe,
-      
-      // Main button
-      MainButton: {
-        text: WebApp.MainButton.text,
-        color: WebApp.MainButton.color,
-        textColor: WebApp.MainButton.textColor,
-        isVisible: WebApp.MainButton.isVisible,
-        isProgressVisible: WebApp.MainButton.isProgressVisible,
-        isActive: WebApp.MainButton.isActive
-      },
-      
-      // Back button
-      BackButton: {
-        isVisible: WebApp.BackButton.isVisible
-      },
-      
-      // Settings button
-      SettingsButton: {
-        isVisible: WebApp.SettingsButton.isVisible
-      },
-      
-      // Haptic feedback
-      HapticFeedback: WebApp.HapticFeedback ? 'Available' : 'Not Available',
-      
-      // Cloud storage
-      CloudStorage: WebApp.CloudStorage ? 'Available' : 'Not Available',
-      
-      // Biometric manager
-      BiometricManager: WebApp.BiometricManager ? {
-        isInited: WebApp.BiometricManager.isInited,
-        isBiometricAvailable: WebApp.BiometricManager.isBiometricAvailable,
-        biometricType: WebApp.BiometricManager.biometricType,
-        isAccessRequested: WebApp.BiometricManager.isAccessRequested,
-        isAccessGranted: WebApp.BiometricManager.isAccessGranted,
-        isBiometricTokenSaved: WebApp.BiometricManager.isBiometricTokenSaved,
-        deviceId: WebApp.BiometricManager.deviceId
-      } : 'Not Available'
+      // Collect all Telegram WebApp data
+      const data: TelegramData = {
+        // Basic WebApp info
+        version: WebApp.version,
+        platform: WebApp.platform,
+        colorScheme: WebApp.colorScheme,
+        themeParams: WebApp.themeParams,
+        isExpanded: WebApp.isExpanded,
+        viewportHeight: WebApp.viewportHeight,
+        viewportStableHeight: WebApp.viewportStableHeight,
+        headerColor: WebApp.headerColor,
+        backgroundColor: WebApp.backgroundColor,
+        isClosingConfirmationEnabled: WebApp.isClosingConfirmationEnabled,
+        isVerticalSwipesEnabled: WebApp.isVerticalSwipesEnabled,
+        
+        // User data
+        initData: WebApp.initData,
+        initDataUnsafe: WebApp.initDataUnsafe,
+        
+        // Main button
+        MainButton: {
+          text: WebApp.MainButton.text,
+          color: WebApp.MainButton.color,
+          textColor: WebApp.MainButton.textColor,
+          isVisible: WebApp.MainButton.isVisible,
+          isProgressVisible: WebApp.MainButton.isProgressVisible,
+          isActive: WebApp.MainButton.isActive
+        },
+        
+        // Back button
+        BackButton: {
+          isVisible: WebApp.BackButton.isVisible
+        },
+        
+        // Settings button
+        SettingsButton: {
+          isVisible: WebApp.SettingsButton.isVisible
+        },
+        
+        // Haptic feedback
+        HapticFeedback: WebApp.HapticFeedback ? 'Available' : 'Not Available',
+        
+        // Cloud storage
+        CloudStorage: WebApp.CloudStorage ? 'Available' : 'Not Available',
+        
+        // Biometric manager
+        BiometricManager: WebApp.BiometricManager ? {
+          isInited: WebApp.BiometricManager.isInited,
+          isBiometricAvailable: WebApp.BiometricManager.isBiometricAvailable,
+          biometricType: WebApp.BiometricManager.biometricType,
+          isAccessRequested: WebApp.BiometricManager.isAccessRequested,
+          isAccessGranted: WebApp.BiometricManager.isAccessGranted,
+          isBiometricTokenSaved: WebApp.BiometricManager.isBiometricTokenSaved,
+          deviceId: WebApp.BiometricManager.deviceId
+        } : 'Not Available'
+      }
+
+      setTelegramData(data)
     }
-
-    setTelegramData(data)
+    
+    setIsReady(true)
   }, [])
 
 
@@ -222,6 +259,95 @@ function App() {
     return String(value)
   }
 
+  // Show loading state
+  if (!isReady) {
+    return (
+      <div style={{ 
+        padding: '40px', 
+        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center',
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          padding: '40px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          maxWidth: '400px',
+          width: '100%'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⏳</div>
+          <h1 style={{ 
+            color: '#2196F3', 
+            marginBottom: '16px',
+            fontSize: '24px',
+            fontWeight: 'bold'
+          }}>
+            Loading...
+          </h1>
+          <p style={{ 
+            color: '#666', 
+            lineHeight: '1.6',
+            fontSize: '16px',
+            marginBottom: '0'
+          }}>
+            Initializing Telegram WebApp...
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show unauthorized message if not opened through Telegram
+  if (isReady && !isAuthorized) {
+    return (
+      <div style={{ 
+        padding: '40px', 
+        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center',
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <div style={{
+          backgroundColor: '#fff',
+          padding: '40px',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          maxWidth: '400px',
+          width: '100%'
+        }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>🚫</div>
+          <h1 style={{ 
+            color: '#e74c3c', 
+            marginBottom: '16px',
+            fontSize: '24px',
+            fontWeight: 'bold'
+          }}>
+            Not Authorized
+          </h1>
+          <p style={{ 
+            color: '#666', 
+            lineHeight: '1.6',
+            fontSize: '16px',
+            marginBottom: '0'
+          }}>
+            This application can only be accessed through Telegram Mini Apps. 
+            Please open this app from within Telegram.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace' }}>
       <h1>Telegram WebApp Variables</h1>
@@ -230,7 +356,7 @@ function App() {
       <div style={{ 
         display: 'grid', 
         gap: '10px',
-        maxHeight: '80vh',
+        maxHeight: '70vh',
         overflowY: 'auto'
       }}>
         {Object.entries(telegramData).map(([key, value]) => (
@@ -320,6 +446,15 @@ function App() {
             style={{ margin: '5px', padding: '8px 16px', backgroundColor: '#607D8B', color: 'white', border: 'none', borderRadius: '4px' }}
           >
             Refresh Data
+          </button>
+          <button 
+            onClick={() => {
+              const authorized = checkTelegramValues()
+              alert(`Telegram values check: ${authorized ? 'FOUND' : 'NOT FOUND'}`)
+            }}
+            style={{ margin: '5px', padding: '8px 16px', backgroundColor: '#FF5722', color: 'white', border: 'none', borderRadius: '4px' }}
+          >
+            🔄 Check Values
           </button>
         </div>
       </div>
