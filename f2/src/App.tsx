@@ -307,43 +307,232 @@ function App() {
   if (isReady && !isAuthorized) {
     return (
       <div style={{ 
-        padding: '40px', 
-        fontFamily: 'Arial, sans-serif',
-        textAlign: 'center',
-        backgroundColor: '#f5f5f5',
         minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        padding: '20px',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Animated background elements */}
         <div style={{
-          backgroundColor: '#fff',
-          padding: '40px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          maxWidth: '400px',
-          width: '100%'
+          position: 'absolute',
+          top: '10%',
+          left: '10%',
+          width: '100px',
+          height: '100px',
+          background: 'rgba(255, 255, 255, 0.1)',
+          borderRadius: '50%',
+          animation: 'float 6s ease-in-out infinite'
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          top: '70%',
+          right: '15%',
+          width: '150px',
+          height: '150px',
+          background: 'rgba(255, 255, 255, 0.05)',
+          borderRadius: '50%',
+          animation: 'float 8s ease-in-out infinite reverse'
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: '20%',
+          left: '20%',
+          width: '80px',
+          height: '80px',
+          background: 'rgba(255, 255, 255, 0.08)',
+          borderRadius: '50%',
+          animation: 'float 7s ease-in-out infinite'
+        }}></div>
+
+        {/* Main content card */}
+        <div style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          padding: '60px 40px',
+          borderRadius: '24px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+          maxWidth: '480px',
+          width: '100%',
+          textAlign: 'center',
+          position: 'relative',
+          transform: 'translateY(0)',
+          animation: 'slideUp 0.8s ease-out'
         }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>🚫</div>
+          {/* Telegram icon with animation */}
+          <div style={{
+            fontSize: '80px',
+            marginBottom: '24px',
+            background: 'linear-gradient(135deg, #0088cc, #229ED9)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            animation: 'pulse 2s ease-in-out infinite'
+          }}>
+            ✈️
+          </div>
+
           <h1 style={{ 
-            color: '#e74c3c', 
+            color: '#2c3e50',
             marginBottom: '16px',
-            fontSize: '24px',
-            fontWeight: 'bold'
+            fontSize: '32px',
+            fontWeight: '700',
+            letterSpacing: '-0.5px',
+            lineHeight: '1.2'
           }}>
-            Not Authorized
+            Access Restricted
           </h1>
+
           <p style={{ 
-            color: '#666', 
-            lineHeight: '1.6',
-            fontSize: '16px',
-            marginBottom: '0'
+            color: '#64748b',
+            lineHeight: '1.7',
+            fontSize: '18px',
+            marginBottom: '32px',
+            fontWeight: '400'
           }}>
-            This application can only be accessed through Telegram Mini Apps. 
-            Please open this app from within Telegram.
+            This biometric security app is exclusively available through 
+            <strong style={{ color: '#0088cc' }}> Telegram Mini Apps</strong>.
+          </p>
+
+          {/* Instructions card */}
+          <div style={{
+            backgroundColor: '#f8fafc',
+            border: '2px solid #e2e8f0',
+            borderRadius: '16px',
+            padding: '24px',
+            marginBottom: '32px',
+            textAlign: 'left'
+          }}>
+            <h3 style={{
+              color: '#1e293b',
+              fontSize: '18px',
+              fontWeight: '600',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              📱 How to Access
+            </h3>
+            <ol style={{
+              color: '#475569',
+              fontSize: '15px',
+              lineHeight: '1.6',
+              margin: '0',
+              paddingLeft: '20px'
+            }}>
+              <li style={{ marginBottom: '8px' }}>Open Telegram on your device</li>
+              <li style={{ marginBottom: '8px' }}>Search for our bot or use the provided link</li>
+              <li style={{ marginBottom: '8px' }}>Tap "Open App" to launch the mini app</li>
+              <li>Enjoy secure biometric authentication!</li>
+            </ol>
+          </div>
+
+          {/* Feature highlights */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: '16px',
+            marginBottom: '32px'
+          }}>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#ecfdf5',
+              borderRadius: '12px',
+              border: '1px solid #d1fae5'
+            }}>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>🔐</div>
+              <div style={{ fontSize: '14px', color: '#065f46', fontWeight: '600' }}>
+                Secure Authentication
+              </div>
+            </div>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#eff6ff',
+              borderRadius: '12px',
+              border: '1px solid #dbeafe'
+            }}>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>👆</div>
+              <div style={{ fontSize: '14px', color: '#1e40af', fontWeight: '600' }}>
+                Biometric Access
+              </div>
+            </div>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#fef3c7',
+              borderRadius: '12px',
+              border: '1px solid #fde68a'
+            }}>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>⚡</div>
+              <div style={{ fontSize: '14px', color: '#92400e', fontWeight: '600' }}>
+                Fast & Reliable
+              </div>
+            </div>
+          </div>
+
+          {/* Call to action */}
+          <div style={{
+            padding: '20px',
+            background: 'linear-gradient(135deg, #0088cc, #229ED9)',
+            borderRadius: '16px',
+            color: 'white',
+            marginBottom: '16px'
+          }}>
+            <div style={{ fontSize: '20px', marginBottom: '8px' }}>🚀</div>
+            <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px' }}>
+              Ready to get started?
+            </div>
+            <div style={{ fontSize: '14px', opacity: '0.9' }}>
+              Launch this app from Telegram to continue
+            </div>
+          </div>
+
+          <p style={{
+            color: '#94a3b8',
+            fontSize: '13px',
+            margin: '0',
+            fontStyle: 'italic'
+          }}>
+            Powered by Telegram WebApp API
           </p>
         </div>
+
+        {/* CSS animations */}
+        <style>{`
+          @keyframes slideUp {
+            from {
+              opacity: 0;
+              transform: translateY(30px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          
+          @keyframes float {
+            0%, 100% {
+              transform: translateY(0px);
+            }
+            50% {
+              transform: translateY(-20px);
+            }
+          }
+          
+          @keyframes pulse {
+            0%, 100% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.05);
+            }
+          }
+        `}</style>
       </div>
     )
   }
