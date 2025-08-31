@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Mini App Complete Demo</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-button-color: #0088cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f0f0f0;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #0088cc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            padding: var(--tg-safe-area-inset-top, 0) var(--tg-safe-area-inset-right, 16px) var(--tg-safe-area-inset-bottom, 0) var(--tg-safe-area-inset-left, 16px);
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--tg-theme-button-color), #00a0ff);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            margin-bottom: 20px;
+        }
+
+        .tab-container {
+            display: flex;
+            overflow-x: auto;
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            padding: 4px;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 8px;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--tg-theme-text-color);
+            transition: all 0.3s ease;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .tab:active {
+            transform: scale(0.98);
+        }
+
+        .tab.active {
+            background: var(--tg-theme-bg-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: var(--tg-theme-button-color);
+            font-weight: 600;
+        }
+
+        .section {
+            display: none;
+            padding: 20px;
+            background: var(--tg-theme-bg-color);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section h3 {
+            color: var(--tg-theme-button-color);
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+
+        .feature-item {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--tg-theme-button-color);
+        }
+
+        .feature-item h4 {
+            margin-bottom: 8px;
+            color: var(--tg-theme-text-color);
+        }
+
+        .feature-item p {
+            color: var(--tg-theme-hint-color);
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 4px;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+        }
+
+        .status {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .info-item {
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .sensor-data {
+            display: flex;
+            justify-content: space-between;
+            background: var(--tg-theme-secondary-bg-color);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 8px 0;
+        }
+
+        .sensor-axis {
+            text-align: center;
+        }
+
+        .sensor-axis-label {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .sensor-axis-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--tg-theme-text-color);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 8px 0;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+        }
+
+        .storage-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--tg-theme-button-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Telegram Mini App</h1>
+        <p>Complete Feature Demonstration</p>
+    </div>
+
+    <div class="tab-container">
+        <button class="tab active" onclick="showSection('basics', this)">Basics</button>
+        <button class="tab" onclick="showSection('ui', this)">UI Controls</button>
+        <button class="tab" onclick="showSection('storage', this)">Storage</button>
+        <button class="tab" onclick="showSection('device', this)">Device</button>
+        <button class="tab" onclick="showSection('sensors', this)">Sensors</button>
+        <button class="tab" onclick="showSection('interaction', this)">Interaction</button>
+    </div>
+
+    <!-- Basics Section -->
+    <div id="basics" class="section active">
+        <h3>📱 Basic Information</h3>
+        
+        <div class="feature-item">
+            <h4>WebApp Info</h4>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Version</div>
+                    <div class="info-value" id="version">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Platform</div>
+                    <div class="info-value" id="platform">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Color Scheme</div>
+                    <div class="info-value" id="colorScheme">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Is Expanded</div>
+                    <div class="info-value" id="isExpanded">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="feature-item">
+            <h4>User Information</h4>
+            <div class="info-grid" id="userInfo">
+                <!-- User info will be populated here -->
+            </div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Chat Information</h4>
+            <div class="info-grid" id="chatInfo">
+                <!-- Chat info will be populated here -->
+            </div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Theme Colors</h4>
+            <div id="themeColors"></div>
+        </div>
+    </div>
+
+    <!-- UI Controls Section -->
+    <div id="ui" class="section">
+        <h3>🎛️ User Interface Controls</h3>
+        
+        <div class="feature-item">
+            <h4>Main Button</h4>
+            <p>Control the main button at the bottom of the app</p>
+            <button class="btn" onclick="toggleMainButton()">Toggle Main Button</button>
+            <button class="btn" onclick="changeMainButtonText()">Change Text</button>
+            <button class="btn" onclick="toggleMainButtonProgress()">Toggle Progress</button>
+            <div class="status" id="mainButtonStatus">Main button is hidden</div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Secondary Button</h4>
+            <p>Control the secondary button</p>
+            <button class="btn" onclick="toggleSecondaryButton()">Toggle Secondary Button</button>
+            <button class="btn" onclick="changeSecondaryButtonPosition()">Change Position</button>
+            <div class="status" id="secondaryButtonStatus">Secondary button is hidden</div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Back Button</h4>
+            <p>Header back button control</p>
+            <button class="btn" onclick="toggleBackButton()">Toggle Back Button</button>
+            <div class="status" id="backButtonStatus">Back button is hidden</div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Settings Button</h4>
+            <p>Context menu settings button</p>
+            <button class="btn" onclick="toggleSettingsButton()">Toggle Settings Button</button>
+            <div class="status" id="settingsButtonStatus">Settings button is hidden</div>
+        </div>
+
+        <div class="feature-item">
+            <h4>App Appearance</h4>
+            <p>Control app appearance and behavior</p>
+            <button class="btn" onclick="toggleExpansion()">Toggle Expansion</button>
+            <button class="btn" onclick="changeHeaderColor()">Change Header Color</button>
+            <button class="btn" onclick="changeBackgroundColor()">Change Background</button>
+        </div>
+    </div>
+
+    <!-- Storage Section -->
+    <div id="storage" class="section">
+        <h3>💾 Storage Options</h3>
+        
+        <div class="feature-item">
+            <h4>Cloud Storage</h4>
+            <p>Store data in Telegram's cloud (1024 items, 4096 chars each)</p>
+            <input type="text" id="cloudKey" placeholder="Key">
+            <input type="text" id="cloudValue" placeholder="Value">
+            <button class="btn" onclick="cloudStorageSet()">Set</button>
+            <button class="btn" onclick="cloudStorageGet()">Get</button>
+            <button class="btn" onclick="cloudStorageRemove()">Remove</button>
+            <button class="btn btn-secondary" onclick="cloudStorageGetKeys()">List Keys</button>
+            <div class="status" id="cloudStorageStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Device Storage</h4>
+            <p>Local device storage (5MB per user)</p>
+            <input type="text" id="deviceKey" placeholder="Key">
+            <input type="text" id="deviceValue" placeholder="Value">
+            <button class="btn" onclick="deviceStorageSet()">Set</button>
+            <button class="btn" onclick="deviceStorageGet()">Get</button>
+            <button class="btn" onclick="deviceStorageRemove()">Remove</button>
+            <button class="btn btn-secondary" onclick="deviceStorageClear()">Clear All</button>
+            <div class="status" id="deviceStorageStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Secure Storage</h4>
+            <p>Encrypted storage for sensitive data (10 items per user)</p>
+            <input type="text" id="secureKey" placeholder="Key">
+            <input type="text" id="secureValue" placeholder="Sensitive Value">
+            <button class="btn" onclick="secureStorageSet()">Set</button>
+            <button class="btn" onclick="secureStorageGet()">Get</button>
+            <button class="btn" onclick="secureStorageRestore()">Restore</button>
+            <button class="btn" onclick="secureStorageRemove()">Remove</button>
+            <div class="status" id="secureStorageStatus"></div>
+        </div>
+    </div>
+
+    <!-- Device Section -->
+    <div id="device" class="section">
+        <h3>📍 Device Capabilities</h3>
+        
+        <div class="feature-item">
+            <h4>Location Manager</h4>
+            <p>Access device GPS location</p>
+            <button class="btn" onclick="initLocation()">Initialize Location</button>
+            <button class="btn" onclick="getLocation()">Get Location</button>
+            <div class="info-grid" id="locationInfo">
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">Not initialized</div>
+                </div>
+            </div>
+            <div class="status" id="locationStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Biometric Manager</h4>
+            <p>Device biometric authentication</p>
+            <button class="btn" onclick="initBiometrics()">Initialize Biometrics</button>
+            <button class="btn" onclick="requestBiometricAccess()">Request Access</button>
+            <button class="btn" onclick="authenticateBiometric()">Authenticate</button>
+            <div class="info-grid" id="biometricInfo">
+                <div class="info-item">
+                    <div class="info-label">Available</div>
+                    <div class="info-value">Unknown</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Type</div>
+                    <div class="info-value">Unknown</div>
+                </div>
+            </div>
+            <div class="status" id="biometricStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Home Screen</h4>
+            <p>Add app to device home screen</p>
+            <button class="btn" onclick="checkHomeScreen()">Check Home Screen</button>
+            <div class="status" id="homeScreenStatus"></div>
+        </div>
+    </div>
+
+    <!-- Sensors Section -->
+    <div id="sensors" class="section">
+        <h3>🔄 Motion Sensors</h3>
+        
+        <div class="feature-item">
+            <h4>Accelerometer</h4>
+            <p>Device acceleration in m/s²</p>
+            <button class="btn" onclick="startAccelerometer()">Start</button>
+            <button class="btn" onclick="stopAccelerometer()">Stop</button>
+            <div class="sensor-data" id="accelerometerData">
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">X</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">Y</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">Z</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+            </div>
+            <div class="status" id="accelerometerStatus">Stopped</div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Gyroscope</h4>
+            <p>Device rotation rate in rad/s</p>
+            <button class="btn" onclick="startGyroscope()">Start</button>
+            <button class="btn" onclick="stopGyroscope()">Stop</button>
+            <div class="sensor-data" id="gyroscopeData">
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">X</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">Y</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">Z</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+            </div>
+            <div class="status" id="gyroscopeStatus">Stopped</div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Device Orientation</h4>
+            <p>Device orientation in radians</p>
+            <button class="btn" onclick="startOrientation()">Start</button>
+            <button class="btn" onclick="stopOrientation()">Stop</button>
+            <div class="sensor-data" id="orientationData">
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">Alpha</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">Beta</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+                <div class="sensor-axis">
+                    <div class="sensor-axis-label">Gamma</div>
+                    <div class="sensor-axis-value">0.00</div>
+                </div>
+            </div>
+            <div class="status" id="orientationStatus">Stopped</div>
+        </div>
+    </div>
+
+    <!-- Interaction Section -->
+    <div id="interaction" class="section">
+        <h3>🤝 User Interactions</h3>
+        
+        <div class="feature-item">
+            <h4>Haptic Feedback</h4>
+            <p>Provide tactile feedback to users</p>
+            <button class="btn" onclick="hapticLight()">Light Impact</button>
+            <button class="btn" onclick="hapticMedium()">Medium Impact</button>
+            <button class="btn" onclick="hapticHeavy()">Heavy Impact</button>
+            <button class="btn" onclick="hapticSuccess()">Success</button>
+            <button class="btn" onclick="hapticError()">Error</button>
+            <button class="btn" onclick="hapticSelection()">Selection</button>
+        </div>
+
+        <div class="feature-item">
+            <h4>Popups</h4>
+            <p>Native popup dialogs</p>
+            <button class="btn" onclick="showSimplePopup()">Simple Popup</button>
+            <button class="btn" onclick="showConfirmPopup()">Confirm Dialog</button>
+            <button class="btn" onclick="showCustomPopup()">Custom Popup</button>
+            <div class="status" id="popupStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>QR Scanner</h4>
+            <p>Scan QR codes with native scanner</p>
+            <button class="btn" onclick="scanQR()">Scan QR Code</button>
+            <div class="status" id="qrStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Clipboard</h4>
+            <p>Read and write clipboard data</p>
+            <input type="text" id="clipboardInput" placeholder="Text to copy">
+            <button class="btn" onclick="writeClipboard()">Write to Clipboard</button>
+            <button class="btn" onclick="readClipboard()">Read Clipboard</button>
+            <div class="status" id="clipboardStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>File Operations</h4>
+            <p>Download files and share content</p>
+            <input type="url" id="downloadUrl" placeholder="File URL">
+            <input type="text" id="fileName" placeholder="File name">
+            <button class="btn" onclick="downloadFile()">Download File</button>
+            <div class="status" id="fileStatus"></div>
+        </div>
+
+        <div class="feature-item">
+            <h4>Share & Communication</h4>
+            <p>Share to stories and send data</p>
+            <textarea id="shareText" placeholder="Text to share"></textarea>
+            <button class="btn" onclick="shareStory()">Share to Story</button>
+            <button class="btn" onclick="sendDataToBot()">Send Data to Bot</button>
+            <div class="status" id="shareStatus"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app...');
+            initializeApp();
+            setupEventHandlers();
+            loadBasicInfo();
+            initializeTabs();
+        });
+
+        // Backup initialization in case DOMContentLoaded doesn't fire
+        window.addEventListener('load', function() {
+            if (!document.querySelector('.tab.active')) {
+                console.log('Backup initialization...');
+                initializeTabs();
+            }
+        });
+
+        // Immediate initialization for Telegram WebApp
+        if (document.readyState === 'loading') {
+            // Do nothing, DOMContentLoaded will handle it
+        } else {
+            // DOM is already loaded
+            setTimeout(() => {
+                console.log('Immediate initialization...');
+                initializeApp();
+                setupEventHandlers();
+                loadBasicInfo();
+                initializeTabs();
+            }, 100);
+        }
+
+        function initializeTabs() {
+            // Ensure the first tab is active on load
+            showSection('basics');
+            
+            // Add additional touch handlers for better mobile experience
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach((tab, index) => {
+                // Add touch event listeners for better mobile experience
+                tab.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    this.style.transform = 'scale(0.98)';
+                });
+                
+                tab.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    this.style.transform = 'scale(1)';
+                });
+                
+                // Double-check click handlers
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const sectionIds = ['basics', 'ui', 'storage', 'device', 'sensors', 'interaction'];
+                    if (sectionIds[index]) {
+                        showSection(sectionIds[index], this);
+                    }
+                });
+            });
+            
+            console.log('Tabs initialized');
+        }
+
+        function initializeApp() {
+            // Initialize WebApp
+            tg.ready();
+            tg.expand();
+            
+            // Enable closing confirmation
+            tg.enableClosingConfirmation();
+        }
+
+        function setupEventHandlers() {
+            // Main button click
+            tg.MainButton.onClick(() => {
+                updateStatus('mainButtonStatus', 'Main button clicked!', 'status');
+                tg.HapticFeedback.impactOccurred('medium');
+            });
+
+            // Secondary button click
+            tg.SecondaryButton.onClick(() => {
+                updateStatus('secondaryButtonStatus', 'Secondary button clicked!', 'status');
+                tg.HapticFeedback.impactOccurred('medium');
+            });
+
+            // Back button click
+            tg.BackButton.onClick(() => {
+                updateStatus('backButtonStatus', 'Back button clicked!', 'status');
+                tg.HapticFeedback.impactOccurred('light');
+            });
+
+            // Settings button click
+            tg.SettingsButton.onClick(() => {
+                updateStatus('settingsButtonStatus', 'Settings button clicked!', 'status');
+            });
+
+            // Theme change event
+            tg.onEvent('themeChanged', () => {
+                loadBasicInfo();
+                updateStatus('basics', 'Theme changed!', 'status');
+            });
+
+            // Viewport change event
+            tg.onEvent('viewportChanged', (params) => {
+                updateWebAppInfo();
+            });
+
+            // Biometric events
+            tg.onEvent('biometricManagerUpdated', () => {
+                updateBiometricInfo();
+            });
+
+            tg.onEvent('biometricAuthRequested', (params) => {
+                if (params.isAuthenticated) {
+                    updateStatus('biometricStatus', 'Biometric authentication successful!', 'status');
+                } else {
+                    updateStatus('biometricStatus', 'Biometric authentication failed!', 'error');
+                }
+            });
+
+            // Location events
+            tg.onEvent('locationManagerUpdated', () => {
+                updateLocationInfo();
+            });
+
+            // Sensor events
+            tg.onEvent('accelerometerChanged', (data) => {
+                updateSensorData('accelerometerData', data);
+            });
+
+            tg.onEvent('gyroscopeChanged', (data) => {
+                updateSensorData('gyroscopeData', data);
+            });
+
+            tg.onEvent('deviceOrientationChanged', (data) => {
+                updateOrientationData(data);
+            });
+
+            // QR Scanner events
+            tg.onEvent('qrTextReceived', (data) => {
+                updateStatus('qrStatus', `QR Code scanned: ${data.data}`, 'status');
+            });
+
+            // Clipboard events
+            tg.onEvent('clipboardTextReceived', (data) => {
+                updateStatus('clipboardStatus', `Clipboard read: ${data.data}`, 'status');
+            });
+
+            // File download events
+            tg.onEvent('fileDownloadRequested', (data) => {
+                updateStatus('fileStatus', `Download requested: ${data.file_name}`, 'status');
+            });
+
+            // Home screen events
+            tg.onEvent('homeScreenAdded', () => {
+                updateStatus('homeScreenStatus', 'Added to home screen!', 'status');
+            });
+
+            // Popup events
+            tg.onEvent('popupClosed', (data) => {
+                updateStatus('popupStatus', `Popup closed. Button: ${data.button_id || 'none'}`, 'status');
+            });
+        }
+
+        function loadBasicInfo() {
+            updateWebAppInfo();
+            updateUserInfo();
+            updateChatInfo();
+            updateThemeColors();
+        }
+
+        function updateWebAppInfo() {
+            document.getElementById('version').textContent = tg.version;
+            document.getElementById('platform').textContent = tg.platform;
+            document.getElementById('colorScheme').textContent = tg.colorScheme;
+            document.getElementById('isExpanded').textContent = tg.isExpanded;
+        }
+
+        function updateUserInfo() {
+            const user = tg.initDataUnsafe?.user;
+            const userInfoDiv = document.getElementById('userInfo');
+            
+            if (user) {
+                userInfoDiv.innerHTML = `
+                    <div class="info-item">
+                        <div class="info-label">ID</div>
+                        <div class="info-value">${user.id}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">First Name</div>
+                        <div class="info-value">${user.first_name}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Username</div>
+                        <div class="info-value">${user.username || 'N/A'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Language</div>
+                        <div class="info-value">${user.language_code}</div>
+                    </div>
+                `;
+            } else {
+                userInfoDiv.innerHTML = '<div class="info-item"><div class="info-value">No user data available</div></div>';
+            }
+        }
+
+        function updateChatInfo() {
+            const chat = tg.initDataUnsafe?.chat;
+            const chatInfoDiv = document.getElementById('chatInfo');
+            
+            if (chat) {
+                chatInfoDiv.innerHTML = `
+                    <div class="info-item">
+                        <div class="info-label">ID</div>
+                        <div class="info-value">${chat.id}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Type</div>
+                        <div class="info-value">${chat.type}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Title</div>
+                        <div class="info-value">${chat.title || 'N/A'}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Username</div>
+                        <div class="info-value">${chat.username || 'N/A'}</div>
+                    </div>
+                `;
+            } else {
+                chatInfoDiv.innerHTML = '<div class="info-item"><div class="info-value">No chat data available</div></div>';
+            }
+        }
+
+        function updateThemeColors() {
+            const themeDiv = document.getElementById('themeColors');
+            const colors = [
+                ['Background', 'bg_color'],
+                ['Text', 'text_color'],
+                ['Button', 'button_color'],
+                ['Button Text', 'button_text_color'],
+                ['Secondary BG', 'secondary_bg_color'],
+                ['Hint', 'hint_color'],
+                ['Link', 'link_color']
+            ];
+
+            themeDiv.innerHTML = colors.map(([name, key]) => {
+                const color = tg.themeParams[key] || '#cccccc';
+                return `
+                    <div class="info-item" style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 20px; height: 20px; background: ${color}; border-radius: 4px; border: 1px solid #ddd;"></div>
+                        <div>
+                            <div class="info-label">${name}</div>
+                            <div class="info-value">${color}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showSection(sectionId, clickedTab) {
+            try {
+                console.log('Switching to section:', sectionId);
+                
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Show selected section
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                    console.log('Section activated:', sectionId);
+                } else {
+                    console.error('Section not found:', sectionId);
+                }
+                
+                // Add active class to clicked tab
+                if (clickedTab) {
+                    clickedTab.classList.add('active');
+                    console.log('Tab activated');
+                } else {
+                    // Fallback: find and activate the tab by section id
+                    const tabButtons = document.querySelectorAll('.tab');
+                    const sectionMap = {
+                        'basics': 0,
+                        'ui': 1, 
+                        'storage': 2,
+                        'device': 3,
+                        'sensors': 4,
+                        'interaction': 5
+                    };
+                    const tabIndex = sectionMap[sectionId];
+                    if (tabIndex !== undefined && tabButtons[tabIndex]) {
+                        tabButtons[tabIndex].classList.add('active');
+                        console.log('Tab activated via fallback');
+                    }
+                }
+                
+                // Add some haptic feedback for tab switching
+                if (typeof tg !== 'undefined' && tg.HapticFeedback && tg.HapticFeedback.selectionChanged) {
+                    tg.HapticFeedback.selectionChanged();
+                }
+            } catch (error) {
+                console.error('Error switching tabs:', error);
+                // Force show the section even if there's an error
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                }
+            }
+        }
+
+        // UI Controls Functions
+        let mainButtonVisible = false;
+        let secondaryButtonVisible = false;
+        let backButtonVisible = false;
+        let settingsButtonVisible = false;
+
+        function toggleMainButton() {
+            if (mainButtonVisible) {
+                tg.MainButton.hide();
+                updateStatus('mainButtonStatus', 'Main button is hidden', 'status');
+            } else {
+                tg.MainButton.setText('Click Me!').show();
+                updateStatus('mainButtonStatus', 'Main button is visible', 'status');
+            }
+            mainButtonVisible = !mainButtonVisible;
+        }
+
+        function changeMainButtonText() {
+            const texts = ['Hello!', 'Click Me!', 'Action', 'Submit', 'Continue'];
+            const randomText = texts[Math.floor(Math.random() * texts.length)];
+            tg.MainButton.setText(randomText);
+            updateStatus('mainButtonStatus', `Main button text changed to: ${randomText}`, 'status');
+        }
+
+        let mainButtonProgress = false;
+        function toggleMainButtonProgress() {
+            if (mainButtonProgress) {
+                tg.MainButton.hideProgress();
+                updateStatus('mainButtonStatus', 'Progress hidden', 'status');
+            } else {
+                tg.MainButton.showProgress();
+                updateStatus('mainButtonStatus', 'Progress shown', 'status');
+            }
+            mainButtonProgress = !mainButtonProgress;
+        }
+
+        function toggleSecondaryButton() {
+            if (secondaryButtonVisible) {
+                tg.SecondaryButton.hide();
+                updateStatus('secondaryButtonStatus', 'Secondary button is hidden', 'status');
+            } else {
+                tg.SecondaryButton.setText('Cancel').show();
+                updateStatus('secondaryButtonStatus', 'Secondary button is visible', 'status');
+            }
+            secondaryButtonVisible = !secondaryButtonVisible;
+        }
+
+        let secondaryButtonPositions = ['left', 'right', 'top', 'bottom'];
+        let currentPositionIndex = 0;
+        function changeSecondaryButtonPosition() {
+            const position = secondaryButtonPositions[currentPositionIndex % secondaryButtonPositions.length];
+            tg.SecondaryButton.setParams({ position: position });
+            updateStatus('secondaryButtonStatus', `Position changed to: ${position}`, 'status');
+            currentPositionIndex++;
+        }
+
+        function toggleBackButton() {
+            if (backButtonVisible) {
+                tg.BackButton.hide();
+                updateStatus('backButtonStatus', 'Back button is hidden', 'status');
+            } else {
+                tg.BackButton.show();
+                updateStatus('backButtonStatus', 'Back button is visible', 'status');
+            }
+            backButtonVisible = !backButtonVisible;
+        }
+
+        function toggleSettingsButton() {
+            if (settingsButtonVisible) {
+                tg.SettingsButton.hide();
+                updateStatus('settingsButtonStatus', 'Settings button is hidden', 'status');
+            } else {
+                tg.SettingsButton.show();
+                updateStatus('settingsButtonStatus', 'Settings button is visible', 'status');
+            }
+            settingsButtonVisible = !settingsButtonVisible;
+        }
+
+        function toggleExpansion() {
+            if (tg.isExpanded) {
+                // Note: There's no direct collapse method, but we can try to minimize
+                updateStatus('ui', 'App is already expanded', 'status');
+            } else {
+                tg.expand();
+                updateStatus('ui', 'App expanded', 'status');
+            }
+        }
+
+        function changeHeaderColor() {
+            const colors = ['#0088cc', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            tg.setHeaderColor(randomColor);
+            updateStatus('ui', `Header color changed to: ${randomColor}`, 'status');
+        }
+
+        function changeBackgroundColor() {
+            const colors = ['#ffffff', '#f8f9fa', '#e9ecef', '#fff3cd', '#d1ecf1', '#d4edda'];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            tg.setBackgroundColor(randomColor);
+            updateStatus('ui', `Background color changed to: ${randomColor}`, 'status');
+        }
+
+        // Storage Functions
+        function cloudStorageSet() {
+            const key = document.getElementById('cloudKey').value;
+            const value = document.getElementById('cloudValue').value;
+            
+            if (!key || !value) {
+                updateStatus('cloudStorageStatus', 'Please enter both key and value', 'error');
+                return;
+            }
+
+            tg.CloudStorage.setItem(key, value, (error, success) => {
+                if (error) {
+                    updateStatus('cloudStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('cloudStorageStatus', `Stored successfully: ${key} = ${value}`, 'status');
+                }
+            });
+        }
+
+        function cloudStorageGet() {
+            const key = document.getElementById('cloudKey').value;
+            
+            if (!key) {
+                updateStatus('cloudStorageStatus', 'Please enter a key', 'error');
+                return;
+            }
+
+            tg.CloudStorage.getItem(key, (error, value) => {
+                if (error) {
+                    updateStatus('cloudStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('cloudStorageStatus', `Retrieved: ${key} = ${value || 'null'}`, 'status');
+                }
+            });
+        }
+
+        function cloudStorageRemove() {
+            const key = document.getElementById('cloudKey').value;
+            
+            if (!key) {
+                updateStatus('cloudStorageStatus', 'Please enter a key', 'error');
+                return;
+            }
+
+            tg.CloudStorage.removeItem(key, (error, success) => {
+                if (error) {
+                    updateStatus('cloudStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('cloudStorageStatus', `Removed key: ${key}`, 'status');
+                }
+            });
+        }
+
+        function cloudStorageGetKeys() {
+            tg.CloudStorage.getKeys((error, keys) => {
+                if (error) {
+                    updateStatus('cloudStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('cloudStorageStatus', `Keys: ${keys.join(', ') || 'none'}`, 'status');
+                }
+            });
+        }
+
+        // Device Storage Functions
+        function deviceStorageSet() {
+            const key = document.getElementById('deviceKey').value;
+            const value = document.getElementById('deviceValue').value;
+            
+            if (!key || !value) {
+                updateStatus('deviceStorageStatus', 'Please enter both key and value', 'error');
+                return;
+            }
+
+            tg.DeviceStorage.setItem(key, value, (error, success) => {
+                if (error) {
+                    updateStatus('deviceStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('deviceStorageStatus', `Stored successfully: ${key} = ${value}`, 'status');
+                }
+            });
+        }
+
+        function deviceStorageGet() {
+            const key = document.getElementById('deviceKey').value;
+            
+            if (!key) {
+                updateStatus('deviceStorageStatus', 'Please enter a key', 'error');
+                return;
+            }
+
+            tg.DeviceStorage.getItem(key, (error, value) => {
+                if (error) {
+                    updateStatus('deviceStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('deviceStorageStatus', `Retrieved: ${key} = ${value || 'null'}`, 'status');
+                }
+            });
+        }
+
+        function deviceStorageRemove() {
+            const key = document.getElementById('deviceKey').value;
+            
+            if (!key) {
+                updateStatus('deviceStorageStatus', 'Please enter a key', 'error');
+                return;
+            }
+
+            tg.DeviceStorage.removeItem(key, (error, success) => {
+                if (error) {
+                    updateStatus('deviceStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('deviceStorageStatus', `Removed key: ${key}`, 'status');
+                }
+            });
+        }
+
+        function deviceStorageClear() {
+            tg.DeviceStorage.clear((error, success) => {
+                if (error) {
+                    updateStatus('deviceStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('deviceStorageStatus', 'All device storage cleared', 'status');
+                }
+            });
+        }
+
+        // Secure Storage Functions
+        function secureStorageSet() {
+            const key = document.getElementById('secureKey').value;
+            const value = document.getElementById('secureValue').value;
+            
+            if (!key || !value) {
+                updateStatus('secureStorageStatus', 'Please enter both key and value', 'error');
+                return;
+            }
+
+            tg.SecureStorage.setItem(key, value, (error, success) => {
+                if (error) {
+                    updateStatus('secureStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('secureStorageStatus', `Securely stored: ${key}`, 'status');
+                }
+            });
+        }
+
+        function secureStorageGet() {
+            const key = document.getElementById('secureKey').value;
+            
+            if (!key) {
+                updateStatus('secureStorageStatus', 'Please enter a key', 'error');
+                return;
+            }
+
+            tg.SecureStorage.getItem(key, (error, value, canRestore) => {
+                if (error) {
+                    updateStatus('secureStorageStatus', `Error: ${error}`, 'error');
+                } else if (value === null && canRestore) {
+                    updateStatus('secureStorageStatus', `Key not found but can be restored: ${key}`, 'status');
+                } else {
+                    updateStatus('secureStorageStatus', `Retrieved: ${key} = ${value || 'null'}`, 'status');
+                }
+            });
+        }
+
+        function secureStorageRestore() {
+            const key = document.getElementById('secureKey').value;
+            
+            if (!key) {
+                updateStatus('secureStorageStatus', 'Please enter a key', 'error');
+                return;
+            }
+
+            tg.SecureStorage.restoreItem(key, (error, value) => {
+                if (error) {
+                    updateStatus('secureStorageStatus', `Restore error: ${error}`, 'error');
+                } else {
+                    updateStatus('secureStorageStatus', `Restored: ${key} = ${value}`, 'status');
+                }
+            });
+        }
+
+        function secureStorageRemove() {
+            const key = document.getElementById('secureKey').value;
+            
+            if (!key) {
+                updateStatus('secureStorageStatus', 'Please enter a key', 'error');
+                return;
+            }
+
+            tg.SecureStorage.removeItem(key, (error, success) => {
+                if (error) {
+                    updateStatus('secureStorageStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('secureStorageStatus', `Removed secure key: ${key}`, 'status');
+                }
+            });
+        }
+
+        // Location Functions
+        function initLocation() {
+            tg.LocationManager.init((error) => {
+                if (error) {
+                    updateStatus('locationStatus', `Location init error: ${error}`, 'error');
+                } else {
+                    updateStatus('locationStatus', 'Location manager initialized', 'status');
+                    updateLocationInfo();
+                }
+            });
+        }
+
+        function getLocation() {
+            tg.LocationManager.getLocation((location) => {
+                if (location === null) {
+                    updateStatus('locationStatus', 'Location access denied', 'error');
+                } else {
+                    updateStatus('locationStatus', `Lat: ${location.latitude}, Lng: ${location.longitude}`, 'status');
+                    updateLocationDisplay(location);
+                }
+            });
+        }
+
+        function updateLocationInfo() {
+            const locationInfoDiv = document.getElementById('locationInfo');
+            locationInfoDiv.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Initialized</div>
+                    <div class="info-value">${tg.LocationManager.isInited ? 'Yes' : 'No'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Available</div>
+                    <div class="info-value">${tg.LocationManager.isLocationAvailable ? 'Yes' : 'No'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Access Requested</div>
+                    <div class="info-value">${tg.LocationManager.isAccessRequested ? 'Yes' : 'No'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Access Granted</div>
+                    <div class="info-value">${tg.LocationManager.isAccessGranted ? 'Yes' : 'No'}</div>
+                </div>
+            `;
+        }
+
+        function updateLocationDisplay(location) {
+            const locationInfoDiv = document.getElementById('locationInfo');
+            locationInfoDiv.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Latitude</div>
+                    <div class="info-value">${location.latitude.toFixed(6)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Longitude</div>
+                    <div class="info-value">${location.longitude.toFixed(6)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Altitude</div>
+                    <div class="info-value">${location.altitude ? location.altitude.toFixed(2) + 'm' : 'N/A'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Speed</div>
+                    <div class="info-value">${location.speed ? location.speed.toFixed(2) + 'm/s' : 'N/A'}</div>
+                </div>
+            `;
+        }
+
+        // Biometric Functions
+        function initBiometrics() {
+            tg.BiometricManager.init((error) => {
+                if (error) {
+                    updateStatus('biometricStatus', `Biometric init error: ${error}`, 'error');
+                } else {
+                    updateStatus('biometricStatus', 'Biometric manager initialized', 'status');
+                    updateBiometricInfo();
+                }
+            });
+        }
+
+        function requestBiometricAccess() {
+            tg.BiometricManager.requestAccess({
+                reason: 'We need biometric access to secure your data'
+            }, (error) => {
+                if (error) {
+                    updateStatus('biometricStatus', `Access request error: ${error}`, 'error');
+                } else {
+                    updateStatus('biometricStatus', 'Biometric access requested', 'status');
+                    updateBiometricInfo();
+                }
+            });
+        }
+
+        function authenticateBiometric() {
+            tg.BiometricManager.authenticate({
+                reason: 'Please authenticate to continue'
+            }, (error) => {
+                if (error) {
+                    updateStatus('biometricStatus', `Authentication error: ${error}`, 'error');
+                } else {
+                    updateStatus('biometricStatus', 'Authentication requested', 'status');
+                }
+            });
+        }
+
+        function updateBiometricInfo() {
+            const biometricInfoDiv = document.getElementById('biometricInfo');
+            biometricInfoDiv.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Available</div>
+                    <div class="info-value">${tg.BiometricManager.isBiometricAvailable ? 'Yes' : 'No'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Type</div>
+                    <div class="info-value">${tg.BiometricManager.biometricType || 'Unknown'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Access Granted</div>
+                    <div class="info-value">${tg.BiometricManager.isAccessGranted ? 'Yes' : 'No'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Token Saved</div>
+                    <div class="info-value">${tg.BiometricManager.isBiometricTokenSaved ? 'Yes' : 'No'}</div>
+                </div>
+            `;
+        }
+
+        // Home Screen Functions
+        function checkHomeScreen() {
+            tg.checkHomeScreenStatus((status) => {
+                updateStatus('homeScreenStatus', `Home screen status checked: ${status}`, 'status');
+            });
+        }
+
+        // Sensor Functions
+        function startAccelerometer() {
+            tg.Accelerometer.start({ refresh_rate: 100 }, (error) => {
+                if (error) {
+                    updateStatus('accelerometerStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('accelerometerStatus', 'Accelerometer started', 'status');
+                }
+            });
+        }
+
+        function stopAccelerometer() {
+            tg.Accelerometer.stop();
+            updateStatus('accelerometerStatus', 'Accelerometer stopped', 'status');
+        }
+
+        function startGyroscope() {
+            tg.Gyroscope.start({ refresh_rate: 100 }, (error) => {
+                if (error) {
+                    updateStatus('gyroscopeStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('gyroscopeStatus', 'Gyroscope started', 'status');
+                }
+            });
+        }
+
+        function stopGyroscope() {
+            tg.Gyroscope.stop();
+            updateStatus('gyroscopeStatus', 'Gyroscope stopped', 'status');
+        }
+
+        function startOrientation() {
+            tg.DeviceOrientation.start({ refresh_rate: 100, need_absolute: true }, (error) => {
+                if (error) {
+                    updateStatus('orientationStatus', `Error: ${error}`, 'error');
+                } else {
+                    updateStatus('orientationStatus', 'Device orientation started', 'status');
+                }
+            });
+        }
+
+        function stopOrientation() {
+            tg.DeviceOrientation.stop();
+            updateStatus('orientationStatus', 'Device orientation stopped', 'status');
+        }
+
+        function updateSensorData(elementId, data) {
+            const element = document.getElementById(elementId);
+            const axes = element.querySelectorAll('.sensor-axis-value');
+            if (axes.length >= 3) {
+                axes[0].textContent = data.x.toFixed(2);
+                axes[1].textContent = data.y.toFixed(2);
+                axes[2].textContent = data.z.toFixed(2);
+            }
+        }
+
+        function updateOrientationData(data) {
+            const element = document.getElementById('orientationData');
+            const axes = element.querySelectorAll('.sensor-axis-value');
+            if (axes.length >= 3) {
+                axes[0].textContent = data.alpha.toFixed(2);
+                axes[1].textContent = data.beta.toFixed(2);
+                axes[2].textContent = data.gamma.toFixed(2);
+            }
+        }
+
+        // Haptic Functions
+        function hapticLight() {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function hapticMedium() {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        function hapticHeavy() {
+            tg.HapticFeedback.impactOccurred('heavy');
+        }
+
+        function hapticSuccess() {
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        function hapticError() {
+            tg.HapticFeedback.notificationOccurred('error');
+        }
+
+        function hapticSelection() {
+            tg.HapticFeedback.selectionChanged();
+        }
+
+        // Popup Functions
+        function showSimplePopup() {
+            tg.showPopup({
+                title: 'Simple Popup',
+                message: 'This is a simple popup message.',
+                buttons: [{type: 'ok'}]
+            });
+        }
+
+        function showConfirmPopup() {
+            tg.showPopup({
+                title: 'Confirm Action',
+                message: 'Are you sure you want to continue?',
+                buttons: [
+                    {id: 'yes', type: 'default', text: 'Yes'},
+                    {id: 'no', type: 'cancel'}
+                ]
+            });
+        }
+
+        function showCustomPopup() {
+            tg.showPopup({
+                title: 'Custom Popup',
+                message: 'Choose your action:',
+                buttons: [
+                    {id: 'action1', type: 'default', text: 'Action 1'},
+                    {id: 'action2', type: 'default', text: 'Action 2'},
+                    {id: 'delete', type: 'destructive', text: 'Delete'},
+                    {type: 'cancel'}
+                ]
+            });
+        }
+
+        // QR Scanner Functions
+        function scanQR() {
+            tg.showScanQrPopup({
+                text: 'Scan a QR code to continue'
+            });
+        }
+
+        // Clipboard Functions
+        function writeClipboard() {
+            const text = document.getElementById('clipboardInput').value;
+            if (!text) {
+                updateStatus('clipboardStatus', 'Please enter text to copy', 'error');
+                return;
+            }
+
+            tg.writeTextToClipboard(text);
+            updateStatus('clipboardStatus', `Text copied to clipboard: ${text}`, 'status');
+        }
+
+        function readClipboard() {
+            tg.readTextFromClipboard();
+        }
+
+        // File Functions
+        function downloadFile() {
+            const url = document.getElementById('downloadUrl').value;
+            const fileName = document.getElementById('fileName').value;
+            
+            if (!url || !fileName) {
+                updateStatus('fileStatus', 'Please enter both URL and filename', 'error');
+                return;
+            }
+
+            tg.downloadFile({
+                url: url,
+                file_name: fileName
+            });
+        }
+
+        // Share Functions
+        function shareStory() {
+            const text = document.getElementById('shareText').value;
+            
+            tg.shareToStory('https://example.com/image.jpg', {
+                text: text || 'Check out this amazing Mini App!'
+            });
+            updateStatus('shareStatus', 'Story share requested', 'status');
+        }
+
+        function sendDataToBot() {
+            const data = document.getElementById('shareText').value || 'Hello from Mini App!';
+            tg.sendData(data);
+            updateStatus('shareStatus', `Data sent to bot: ${data}`, 'status');
+        }
+
+        // Utility Functions
+        function updateStatus(elementId, message, type = 'status') {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.className = `status ${type === 'error' ? 'error' : ''}`;
+            }
+        }
+    </script>
+</body>
+</html>

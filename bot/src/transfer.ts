@@ -11,7 +11,7 @@ async function transferSol() {
   const pvt = "";
   const fromKeypair = solanaWeb3.Keypair.fromSecretKey(bs58.default.decode(pvt));
   // Create destination PublicKey
-  const toPublicKey = new solanaWeb3.PublicKey("55vMC4msCGgi24KdRETGUUFAebD1KUiboCo2mJcoHFhe");
+  const toPublicKey = new solanaWeb3.PublicKey("GiGADPr1aThAUJDGnRS6KU9P5SbJ23E9qMUqWoXP1vGJ");
 
   // Convert amount in SOL to lamports (1 SOL = 1_000_000_000 lamports)
   const lamports = 10 * solanaWeb3.LAMPORTS_PER_SOL;

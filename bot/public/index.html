@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyroscope Ball Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 90vw;
+            max-width: 400px;
+            height: 90vh;
+            max-height: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-header {
+            text-align: center;
+            color: white;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .status {
+            font-size: 14px;
+            margin-top: 5px;
+            color: #ffeb3b;
+        }
+
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 80px);
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        }
+
+        .ball {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #4fc3f7, #1976d2);
+            box-shadow: 
+                0 0 20px rgba(79, 195, 247, 0.6),
+                inset 0 0 10px rgba(255, 255, 255, 0.3);
+            transition: box-shadow 0.3s ease;
+            z-index: 10;
+        }
+
+        .coin {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fff59d, #ffeb3b, #f57f17);
+            box-shadow: 
+                0 0 15px rgba(255, 235, 59, 0.8),
+                inset 0 0 5px rgba(255, 255, 255, 0.5);
+            animation: coinGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes coinGlow {
+            from {
+                box-shadow: 
+                    0 0 15px rgba(255, 235, 59, 0.8),
+                    inset 0 0 5px rgba(255, 255, 255, 0.5);
+            }
+            to {
+                box-shadow: 
+                    0 0 25px rgba(255, 235, 59, 1),
+                    inset 0 0 8px rgba(255, 255, 255, 0.7);
+            }
+        }
+
+        .start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .start-button:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .game-over h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #f44336;
+        }
+
+        .game-over p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .restart-button {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #2196f3, #21cbf3);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .restart-button:hover {
+            transform: scale(1.05);
+        }
+
+        .platform {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.3) 50%, rgba(255, 255, 255, 0.1) 100%);
+            border-radius: 5px 5px 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score">Score: <span id="score">0</span></div>
+            <div class="status" id="status">Tap Start to begin!</div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="platform"></div>
+            <div class="ball" id="ball"></div>
+            <button class="start-button" id="startButton">Start Game</button>
+        </div>
+
+        <div class="game-over" id="gameOver" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button class="restart-button" id="restartButton">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        class GyroscopeBallGame {
+            constructor() {
+                this.gameArea = document.getElementById('gameArea');
+                this.ball = document.getElementById('ball');
+                this.scoreElement = document.getElementById('score');
+                this.statusElement = document.getElementById('status');
+                this.startButton = document.getElementById('startButton');
+                this.gameOverScreen = document.getElementById('gameOver');
+                this.finalScoreElement = document.getElementById('finalScore');
+                this.restartButton = document.getElementById('restartButton');
+                
+                this.gameWidth = this.gameArea.clientWidth;
+                this.gameHeight = this.gameArea.clientHeight;
+                
+                this.ballPosition = { x: this.gameWidth / 2, y: this.gameHeight / 2 };
+                this.ballVelocity = { x: 0, y: 0 };
+                this.score = 0;
+                this.coins = [];
+                this.gameRunning = false;
+                this.gyroscopeActive = false;
+                
+                this.initializeTelegram();
+                this.setupEventListeners();
+                this.createCoins();
+                this.updateBallPosition();
+            }
+            
+            initializeTelegram() {
+                // Initialize Telegram WebApp
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+                    Telegram.WebApp.ready();
+                    Telegram.WebApp.expand();
+                    
+                    // Set up theme colors
+                    document.body.style.background = Telegram.WebApp.themeParams.bg_color || document.body.style.background;
+                    
+                    this.statusElement.textContent = "Telegram WebApp Ready!";
+                } else {
+                    this.statusElement.textContent = "Demo mode - Open in Telegram for gyroscope";
+                }
+            }
+            
+            setupEventListeners() {
+                this.startButton.addEventListener('click', () => this.startGame());
+                this.restartButton.addEventListener('click', () => this.restartGame());
+                
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    this.gameWidth = this.gameArea.clientWidth;
+                    this.gameHeight = this.gameArea.clientHeight;
+                });
+                
+                // Fallback for devices without gyroscope - use device orientation
+                window.addEventListener('deviceorientation', (event) => {
+                    if (!this.gyroscopeActive && this.gameRunning) {
+                        const beta = event.beta || 0; // X-axis
+                        const gamma = event.gamma || 0; // Y-axis
+                        
+                        // Convert orientation to velocity
+                        this.ballVelocity.x += gamma * 0.002;
+                        this.ballVelocity.y += beta * 0.002;
+                    }
+                });
+            }
+            
+            startGame() {
+                this.gameRunning = true;
+                this.startButton.style.display = 'none';
+                this.statusElement.textContent = "Starting gyroscope...";
+                
+                // Try to start gyroscope
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.Gyroscope) {
+                    try {
+                        Telegram.WebApp.Gyroscope.start({ refresh_rate: 50 }, (success) => {
+                            if (success) {
+                                this.gyroscopeActive = true;
+                                this.statusElement.textContent = "Tilt your phone to control the ball!";
+                                this.gameLoop();
+                            } else {
+                                this.statusElement.textContent = "Gyroscope unavailable - tilt device instead";
+                                this.gameLoop();
+                            }
+                        });
+                    } catch (error) {
+                        this.statusElement.textContent = "Using device orientation instead";
+                        this.gameLoop();
+                    }
+                } else {
+                    this.statusElement.textContent = "Using device orientation - tilt your device!";
+                    this.gameLoop();
+                }
+            }
+            
+            gameLoop() {
+                if (!this.gameRunning) return;
+                
+                this.updatePhysics();
+                this.updateBallPosition();
+                this.checkCollisions();
+                this.updateScore();
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            updatePhysics() {
+                if (this.gyroscopeActive && typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.Gyroscope) {
+                    // Use Telegram gyroscope data
+                    const gyro = Telegram.WebApp.Gyroscope;
+                    if (gyro.isStarted) {
+                        // Apply gyroscope forces (x and y are swapped and inverted for natural feel)
+                        this.ballVelocity.x += gyro.y * 0.5;
+                        this.ballVelocity.y -= gyro.x * 0.5;
+                    }
+                }
+                
+                // Apply friction
+                this.ballVelocity.x *= 0.98;
+                this.ballVelocity.y *= 0.98;
+                
+                // Update position
+                this.ballPosition.x += this.ballVelocity.x;
+                this.ballPosition.y += this.ballVelocity.y;
+                
+                // Boundary checks
+                const ballRadius = 20;
+                if (this.ballPosition.x < ballRadius || this.ballPosition.x > this.gameWidth - ballRadius ||
+                    this.ballPosition.y < ballRadius || this.ballPosition.y > this.gameHeight - ballRadius - 10) {
+                    this.gameOver();
+                    return;
+                }
+                
+                // Add slight bounce off edges
+                if (this.ballPosition.x < ballRadius * 2) {
+                    this.ballVelocity.x += 0.5;
+                }
+                if (this.ballPosition.x > this.gameWidth - ballRadius * 2) {
+                    this.ballVelocity.x -= 0.5;
+                }
+                if (this.ballPosition.y < ballRadius * 2) {
+                    this.ballVelocity.y += 0.5;
+                }
+                if (this.ballPosition.y > this.gameHeight - ballRadius * 2 - 10) {
+                    this.ballVelocity.y -= 0.5;
+                }
+            }
+            
+            updateBallPosition() {
+                this.ball.style.left = (this.ballPosition.x - 20) + 'px';
+                this.ball.style.top = (this.ballPosition.y - 20) + 'px';
+            }
+            
+            createCoins() {
+                // Clear existing coins
+                this.coins.forEach(coin => {
+                    if (coin.element.parentNode) {
+                        coin.element.parentNode.removeChild(coin.element);
+                    }
+                });
+                this.coins = [];
+                
+                // Create new coins
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(() => this.spawnCoin(), i * 2000);
+                }
+            }
+            
+            spawnCoin() {
+                if (!this.gameRunning) return;
+                
+                const coinElement = document.createElement('div');
+                coinElement.className = 'coin';
+                
+                const coinPosition = {
+                    x: Math.random() * (this.gameWidth - 50) + 25,
+                    y: Math.random() * (this.gameHeight - 100) + 50
+                };
+                
+                coinElement.style.left = (coinPosition.x - 12.5) + 'px';
+                coinElement.style.top = (coinPosition.y - 12.5) + 'px';
+                
+                this.gameArea.appendChild(coinElement);
+                
+                const coin = {
+                    element: coinElement,
+                    position: coinPosition,
+                    collected: false
+                };
+                
+                this.coins.push(coin);
+                
+                // Remove coin after 8 seconds if not collected
+                setTimeout(() => {
+                    if (!coin.collected && coin.element.parentNode) {
+                        coin.element.parentNode.removeChild(coin.element);
+                        const index = this.coins.indexOf(coin);
+                        if (index > -1) {
+                            this.coins.splice(index, 1);
+                        }
+                    }
+                }, 8000);
+                
+                // Spawn next coin
+                setTimeout(() => this.spawnCoin(), 3000 + Math.random() * 2000);
+            }
+            
+            checkCollisions() {
+                this.coins.forEach(coin => {
+                    if (!coin.collected) {
+                        const distance = Math.sqrt(
+                            Math.pow(this.ballPosition.x - coin.position.x, 2) +
+                            Math.pow(this.ballPosition.y - coin.position.y, 2)
+                        );
+                        
+                        if (distance < 30) {
+                            coin.collected = true;
+                            coin.element.style.animation = 'none';
+                            coin.element.style.transform = 'scale(1.5)';
+                            coin.element.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                if (coin.element.parentNode) {
+                                    coin.element.parentNode.removeChild(coin.element);
+                                }
+                            }, 200);
+                            
+                            this.score += 100;
+                            
+                            // Haptic feedback if available
+                            if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+                                Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                            }
+                        }
+                    }
+                });
+                
+                // Remove collected coins
+                this.coins = this.coins.filter(coin => !coin.collected || coin.element.parentNode);
+            }
+            
+            updateScore() {
+                this.scoreElement.textContent = this.score;
+            }
+            
+            gameOver() {
+                this.gameRunning = false;
+                
+                // Stop gyroscope
+                if (this.gyroscopeActive && typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.Gyroscope) {
+                    Telegram.WebApp.Gyroscope.stop();
+                    this.gyroscopeActive = false;
+                }
+                
+                // Haptic feedback
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+                    Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                }
+                
+                this.finalScoreElement.textContent = this.score;
+                this.gameOverScreen.style.display = 'flex';
+            }
+            
+            restartGame() {
+                this.gameRunning = false;
+                this.score = 0;
+                this.ballPosition = { x: this.gameWidth / 2, y: this.gameHeight / 2 };
+                this.ballVelocity = { x: 0, y: 0 };
+                
+                this.gameOverScreen.style.display = 'none';
+                this.startButton.style.display = 'block';
+                this.statusElement.textContent = "Tap Start to begin!";
+                
+                this.createCoins();
+                this.updateBallPosition();
+                this.updateScore();
+            }
+        }
+        
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new GyroscopeBallGame();
+        });
+    </script>
+</body>
+</html>

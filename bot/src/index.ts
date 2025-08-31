@@ -11,8 +11,14 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
+
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Types
 interface SessionData {
@@ -99,6 +105,7 @@ class TelegramBiometricBot {
     this.bot.command('start', async (ctx) => {
       const keyboard = new InlineKeyboard()
         .webApp('🔐 Open Biometric App', this.webAppUrl)
+        .webApp('🎮 Play Game', `https://4db5a9a4491d.ngrok-free.app/game`)
         .row()
         .text('ℹ️ About Biometrics', 'about_biometrics');
 
@@ -374,6 +381,11 @@ class TelegramBiometricBot {
   }
 
   public async start() {
+
+    this.app.get('/game', (req, res) => {
+      res.sendFile(path.join(__dirname, '../public', 'All.html'));
+    });
+
     // Start the web server
     const port = process.env.PORT || 3000;
     this.app.listen(port, () => {

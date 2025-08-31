@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Catcher Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 90vw;
+            max-width: 400px;
+            height: 90vh;
+            max-height: 700px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-header {
+            text-align: center;
+            color: white;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .score-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .lives {
+            font-size: 18px;
+            color: #ff5722;
+        }
+
+        .status {
+            font-size: 14px;
+            color: #ffeb3b;
+        }
+
+        .game-area {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 90px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 30%);
+            overflow: hidden;
+        }
+
+        .catcher {
+            position: absolute;
+            bottom: 30px;
+            width: 80px;
+            height: 30px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e, #ffdc00);
+            border-radius: 40px 40px 10px 10px;
+            box-shadow: 
+                0 0 20px rgba(255, 107, 53, 0.6),
+                inset 0 -5px 10px rgba(0, 0, 0, 0.2),
+                inset 0 5px 10px rgba(255, 255, 255, 0.3);
+            transition: all 0.1s ease-out;
+            z-index: 10;
+        }
+
+        .catcher::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 10px;
+            right: 10px;
+            height: 8px;
+            background: linear-gradient(90deg, #ff6b35, #ffdc00, #ff6b35);
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(255, 107, 53, 0.8);
+        }
+
+        .falling-coin {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fff59d, #ffeb3b, #f57f17);
+            box-shadow: 
+                0 0 15px rgba(255, 235, 59, 0.8),
+                inset 0 0 8px rgba(255, 255, 255, 0.5);
+            animation: coinRotate 1s linear infinite, coinGlow 2s ease-in-out infinite alternate;
+            z-index: 5;
+        }
+
+        .falling-coin::before {
+            content: '$';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #f57f17;
+            font-weight: bold;
+            font-size: 18px;
+            text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes coinRotate {
+            0% { transform: rotateY(0deg); }
+            50% { transform: rotateY(90deg) scaleX(0.5); }
+            100% { transform: rotateY(180deg); }
+        }
+
+        @keyframes coinGlow {
+            from {
+                box-shadow: 
+                    0 0 15px rgba(255, 235, 59, 0.8),
+                    inset 0 0 8px rgba(255, 255, 255, 0.5);
+            }
+            to {
+                box-shadow: 
+                    0 0 25px rgba(255, 235, 59, 1),
+                    inset 0 0 12px rgba(255, 255, 255, 0.7);
+            }
+        }
+
+        .start-button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .start-button:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-align: center;
+            z-index: 100;
+            border-radius: 20px;
+        }
+
+        .game-over h2 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #f44336;
+            text-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+        }
+
+        .game-over p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .restart-button {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #2196f3, #21cbf3);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .restart-button:hover {
+            transform: scale(1.05);
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ffeb3b;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle 1s ease-out forwards;
+        }
+
+        @keyframes particle {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) translate(var(--dx), var(--dy));
+            }
+        }
+
+        .combo {
+            position: absolute;
+            color: #4caf50;
+            font-weight: bold;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.8);
+            animation: comboText 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        @keyframes comboText {
+            0% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.5) translateY(-50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="score-section">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="lives">Lives: <span id="lives">3</span></div>
+            </div>
+            <div class="status" id="status">Tap Start to begin catching coins!</div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="catcher" id="catcher"></div>
+            <button class="start-button" id="startButton">Start Game</button>
+        </div>
+
+        <div class="game-over" id="gameOver" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <p>Coins Caught: <span id="coinsCaught">0</span></p>
+            <button class="restart-button" id="restartButton">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        class CoinCatcherGame {
+            constructor() {
+                this.gameArea = document.getElementById('gameArea');
+                this.catcher = document.getElementById('catcher');
+                this.scoreElement = document.getElementById('score');
+                this.livesElement = document.getElementById('lives');
+                this.statusElement = document.getElementById('status');
+                this.startButton = document.getElementById('startButton');
+                this.gameOverScreen = document.getElementById('gameOver');
+                this.finalScoreElement = document.getElementById('finalScore');
+                this.coinsCaughtElement = document.getElementById('coinsCaught');
+                this.restartButton = document.getElementById('restartButton');
+                
+                this.gameWidth = this.gameArea.clientWidth;
+                this.gameHeight = this.gameArea.clientHeight;
+                
+                this.catcherPosition = this.gameWidth / 2;
+                this.catcherVelocity = 0;
+                this.score = 0;
+                this.lives = 3;
+                this.coinsCaught = 0;
+                this.fallingCoins = [];
+                this.gameRunning = false;
+                this.gyroscopeActive = false;
+                this.coinSpawnRate = 1500; // Start spawning every 1.5 seconds
+                this.coinSpeed = 2;
+                this.combo = 0;
+                this.lastCatchTime = 0;
+                
+                this.initializeTelegram();
+                this.setupEventListeners();
+                this.updateCatcherPosition();
+            }
+            
+            initializeTelegram() {
+                // Initialize Telegram WebApp
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+                    Telegram.WebApp.ready();
+                    Telegram.WebApp.expand();
+                    
+                    // Set up theme colors
+                    document.body.style.background = Telegram.WebApp.themeParams.bg_color || document.body.style.background;
+                    
+                    this.statusElement.textContent = "Telegram WebApp Ready!";
+                } else {
+                    this.statusElement.textContent = "Demo mode - Open in Telegram for gyroscope";
+                }
+            }
+            
+            setupEventListeners() {
+                this.startButton.addEventListener('click', () => this.startGame());
+                this.restartButton.addEventListener('click', () => this.restartGame());
+                
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    this.gameWidth = this.gameArea.clientWidth;
+                    this.gameHeight = this.gameArea.clientHeight;
+                });
+                
+                // Fallback for devices without gyroscope - use device orientation
+                window.addEventListener('deviceorientation', (event) => {
+                    if (!this.gyroscopeActive && this.gameRunning) {
+                        const gamma = event.gamma || 0; // Y-axis (left-right tilt)
+                        
+                        // Convert orientation to velocity (more sensitive)
+                        this.catcherVelocity += gamma * 0.3;
+                    }
+                });
+                
+                // Touch controls for fallback
+                let touchStartX = 0;
+                this.gameArea.addEventListener('touchstart', (e) => {
+                    if (this.gameRunning && !this.gyroscopeActive) {
+                        touchStartX = e.touches[0].clientX;
+                    }
+                });
+                
+                this.gameArea.addEventListener('touchmove', (e) => {
+                    if (this.gameRunning && !this.gyroscopeActive) {
+                        e.preventDefault();
+                        const touchX = e.touches[0].clientX;
+                        const deltaX = touchX - touchStartX;
+                        this.catcherVelocity += deltaX * 0.1;
+                        touchStartX = touchX;
+                    }
+                });
+            }
+            
+            startGame() {
+                this.gameRunning = true;
+                this.startButton.style.display = 'none';
+                this.statusElement.textContent = "Starting gyroscope...";
+                
+                // Try to start gyroscope
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.Gyroscope) {
+                    try {
+                        Telegram.WebApp.Gyroscope.start({ refresh_rate: 50 }, (success) => {
+                            if (success) {
+                                this.gyroscopeActive = true;
+                                this.statusElement.textContent = "Tilt your phone to move the basket!";
+                            } else {
+                                this.statusElement.textContent = "Tilt device or touch to move!";
+                            }
+                            this.gameLoop();
+                            this.spawnCoins();
+                        });
+                    } catch (error) {
+                        this.statusElement.textContent = "Tilt device or touch to move!";
+                        this.gameLoop();
+                        this.spawnCoins();
+                    }
+                } else {
+                    this.statusElement.textContent = "Tilt device or touch to move!";
+                    this.gameLoop();
+                    this.spawnCoins();
+                }
+            }
+            
+            gameLoop() {
+                if (!this.gameRunning) return;
+                
+                this.updateCatcher();
+                this.updateCoins();
+                this.checkCollisions();
+                this.increaseDifficulty();
+                
+                requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            updateCatcher() {
+                // Apply gyroscope input
+                if (this.gyroscopeActive && typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.Gyroscope) {
+                    const gyro = Telegram.WebApp.Gyroscope;
+                    if (gyro.isStarted) {
+                        // Use Y-axis rotation for left-right movement (more sensitive)
+                        this.catcherVelocity += gyro.y * 8;
+                    }
+                }
+                
+                // Apply friction
+                this.catcherVelocity *= 0.85;
+                
+                // Update position
+                this.catcherPosition += this.catcherVelocity;
+                
+                // Keep catcher within bounds
+                const catcherWidth = 80;
+                if (this.catcherPosition < catcherWidth / 2) {
+                    this.catcherPosition = catcherWidth / 2;
+                    this.catcherVelocity = 0;
+                } else if (this.catcherPosition > this.gameWidth - catcherWidth / 2) {
+                    this.catcherPosition = this.gameWidth - catcherWidth / 2;
+                    this.catcherVelocity = 0;
+                }
+                
+                this.updateCatcherPosition();
+            }
+            
+            updateCatcherPosition() {
+                this.catcher.style.left = (this.catcherPosition - 40) + 'px';
+            }
+            
+            spawnCoins() {
+                if (!this.gameRunning) return;
+                
+                // Create new coin
+                const coinElement = document.createElement('div');
+                coinElement.className = 'falling-coin';
+                
+                const coinX = Math.random() * (this.gameWidth - 60) + 30;
+                coinElement.style.left = coinX + 'px';
+                coinElement.style.top = '-30px';
+                
+                this.gameArea.appendChild(coinElement);
+                
+                const coin = {
+                    element: coinElement,
+                    x: coinX,
+                    y: -30,
+                    speed: this.coinSpeed + Math.random() * 2,
+                    missed: false
+                };
+                
+                this.fallingCoins.push(coin);
+                
+                // Schedule next coin
+                setTimeout(() => this.spawnCoins(), this.coinSpawnRate + Math.random() * 500);
+            }
+            
+            updateCoins() {
+                this.fallingCoins.forEach((coin, index) => {
+                    coin.y += coin.speed;
+                    coin.element.style.top = coin.y + 'px';
+                    
+                    // Remove coins that fall off screen
+                    if (coin.y > this.gameHeight + 50) {
+                        if (!coin.missed) {
+                            coin.missed = true;
+                            this.lives--;
+                            this.livesElement.textContent = this.lives;
+                            this.combo = 0; // Reset combo on miss
+                            
+                            // Haptic feedback for miss
+                            if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+                                Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+                            }
+                            
+                            if (this.lives <= 0) {
+                                this.gameOver();
+                                return;
+                            }
+                        }
+                        
+                        coin.element.remove();
+                        this.fallingCoins.splice(index, 1);
+                    }
+                });
+            }
+            
+            checkCollisions() {
+                this.fallingCoins.forEach((coin, index) => {
+                    // Check collision with catcher
+                    const coinCenterX = coin.x + 15; // coin width / 2
+                    const coinBottom = coin.y + 30;
+                    const catcherTop = this.gameHeight - 60; // catcher position
+                    const catcherLeft = this.catcherPosition - 40;
+                    const catcherRight = this.catcherPosition + 40;
+                    
+                    if (coinBottom >= catcherTop && 
+                        coinCenterX >= catcherLeft && 
+                        coinCenterX <= catcherRight &&
+                        !coin.missed) {
+                        
+                        // Coin caught!
+                        this.catchCoin(coin, index);
+                    }
+                });
+            }
+            
+            catchCoin(coin, index) {
+                coin.missed = true; // Prevent multiple catches
+                this.coinsCaught++;
+                
+                // Calculate combo
+                const currentTime = Date.now();
+                if (currentTime - this.lastCatchTime < 2000) { // Within 2 seconds
+                    this.combo++;
+                } else {
+                    this.combo = 1;
+                }
+                this.lastCatchTime = currentTime;
+                
+                // Calculate score with combo bonus
+                const baseScore = 100;
+                const comboBonus = this.combo > 1 ? (this.combo - 1) * 50 : 0;
+                const earnedScore = baseScore + comboBonus;
+                this.score += earnedScore;
+                this.scoreElement.textContent = this.score;
+                
+                // Show combo text
+                if (this.combo > 1) {
+                    this.showComboText(coin.x, coin.y, `COMBO x${this.combo}!`, earnedScore);
+                }
+                
+                // Create particle effect
+                this.createParticles(coin.x + 15, coin.y + 15);
+                
+                // Animate coin collection
+                coin.element.style.animation = 'none';
+                coin.element.style.transform = 'scale(1.5)';
+                coin.element.style.opacity = '0';
+                coin.element.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    coin.element.remove();
+                    this.fallingCoins.splice(index, 1);
+                }, 300);
+                
+                // Haptic feedback
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+                    Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                }
+            }
+            
+            createParticles(x, y) {
+                for (let i = 0; i < 8; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    
+                    const angle = (i / 8) * Math.PI * 2;
+                    const distance = 50 + Math.random() * 30;
+                    const dx = Math.cos(angle) * distance;
+                    const dy = Math.sin(angle) * distance;
+                    
+                    particle.style.setProperty('--dx', dx + 'px');
+                    particle.style.setProperty('--dy', dy + 'px');
+                    
+                    this.gameArea.appendChild(particle);
+                    
+                    setTimeout(() => particle.remove(), 1000);
+                }
+            }
+            
+            showComboText(x, y, text, score) {
+                const comboElement = document.createElement('div');
+                comboElement.className = 'combo';
+                comboElement.textContent = `${text} +${score}`;
+                comboElement.style.left = x + 'px';
+                comboElement.style.top = y + 'px';
+                
+                this.gameArea.appendChild(comboElement);
+                
+                setTimeout(() => comboElement.remove(), 1500);
+            }
+            
+            increaseDifficulty() {
+                // Increase difficulty based on score
+                const difficultyLevel = Math.floor(this.score / 500);
+                this.coinSpawnRate = Math.max(800, 1500 - difficultyLevel * 100);
+                this.coinSpeed = Math.min(5, 2 + difficultyLevel * 0.3);
+            }
+            
+            gameOver() {
+                this.gameRunning = false;
+                
+                // Stop gyroscope
+                if (this.gyroscopeActive && typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.Gyroscope) {
+                    Telegram.WebApp.Gyroscope.stop();
+                    this.gyroscopeActive = false;
+                }
+                
+                // Clear remaining coins
+                this.fallingCoins.forEach(coin => coin.element.remove());
+                this.fallingCoins = [];
+                
+                // Haptic feedback
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+                    Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+                }
+                
+                this.finalScoreElement.textContent = this.score;
+                this.coinsCaughtElement.textContent = this.coinsCaught;
+                this.gameOverScreen.style.display = 'flex';
+            }
+            
+            restartGame() {
+                this.gameRunning = false;
+                this.score = 0;
+                this.lives = 3;
+                this.coinsCaught = 0;
+                this.combo = 0;
+                this.catcherPosition = this.gameWidth / 2;
+                this.catcherVelocity = 0;
+                this.coinSpawnRate = 1500;
+                this.coinSpeed = 2;
+                
+                this.gameOverScreen.style.display = 'none';
+                this.startButton.style.display = 'block';
+                this.statusElement.textContent = "Tap Start to begin catching coins!";
+                
+                // Clear any remaining coins
+                this.fallingCoins.forEach(coin => coin.element.remove());
+                this.fallingCoins = [];
+                
+                this.updateCatcherPosition();
+                this.scoreElement.textContent = this.score;
+                this.livesElement.textContent = this.lives;
+            }
+        }
+        
+        // Initialize game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new CoinCatcherGame();
+        });
+    </script>
+</body>
+</html>
