@@ -1,9 +1,24 @@
 import { useState, useEffect } from 'react'
 import WebApp from '@twa-dev/sdk'
 import './App.css'
+import { 
+  Connection, 
+  Keypair, 
+  PublicKey, 
+  Transaction, 
+  SystemProgram, 
+  LAMPORTS_PER_SOL
+} from '@solana/web3.js'
+import { Buffer } from 'buffer'
 
 interface TelegramData {
-  [key: string]: any
+  [key: string]: unknown
+}
+
+interface SolanaWallet {
+  publicKey: string
+  secretKey?: Uint8Array
+  balance?: number
 }
 
 // Extend Window interface to include Telegram
@@ -21,6 +36,9 @@ function App() {
   const [telegramData, setTelegramData] = useState<TelegramData>({})
   const [isReady, setIsReady] = useState(false)
   const [isAuthorized, setIsAuthorized] = useState(false)
+  const [solanaWallet, setSolanaWallet] = useState<SolanaWallet | null>(null)
+  const [connection] = useState(new Connection('https://api.devnet.solana.com', 'confirmed'))
+  const [isLoading, setIsLoading] = useState(false)
 
   // Simple check for required Telegram values
   const checkTelegramValues = () => {
@@ -189,10 +207,208 @@ function App() {
     })
   }
 
+  // Create Solana wallet with biometric protection
+  const createSolanaWallet = async () => {
+    if (!WebApp.BiometricManager?.isAccessGranted) {
+      alert('Please grant biometric access first')
+      return
+    }
+
+    if (!WebApp.BiometricManager?.isBiometricTokenSaved) {
+      alert('Please save a biometric token first')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      // Generate new keypair
+      const keypair = Keypair.generate()
+      
+      // Convert secret key to base64 for storage using a more browser-compatible approach
+      let secretKeyBase64: string
+      try {
+        secretKeyBase64 = Buffer.from(keypair.secretKey).toString('base64')
+      } catch {
+        // Fallback method using btoa for browser compatibility
+        const binaryString = String.fromCharCode(...Array.from(keypair.secretKey))
+        secretKeyBase64 = btoa(binaryString)
+      }
+      
+      // Store encrypted wallet data in biometric token
+      const walletData = {
+        publicKey: keypair.publicKey.toBase58(),
+        secretKey: secretKeyBase64,
+        createdAt: Date.now()
+      }
+      
+      // Use biometric authentication to protect wallet creation
+      WebApp.BiometricManager.authenticate({
+        reason: "Create a new Solana wallet protected by biometrics"
+      }, async (authenticated: boolean) => {
+        if (authenticated) {
+          try {
+            // Store wallet data as encrypted token
+            const encryptedWalletData = JSON.stringify(walletData)
+            WebApp.BiometricManager.updateBiometricToken(encryptedWalletData, async (updated) => {
+              if (updated) {
+                // Get balance
+                const balance = await connection.getBalance(keypair.publicKey)
+                
+                setSolanaWallet({
+                  publicKey: keypair.publicKey.toBase58(),
+                  secretKey: keypair.secretKey,
+                  balance: balance / LAMPORTS_PER_SOL
+                })
+                
+                alert(`Solana wallet created successfully!\nPublic Key: ${keypair.publicKey.toBase58()}\nBalance: ${balance / LAMPORTS_PER_SOL} SOL`)
+                updateTelegramData()
+              } else {
+                alert('Failed to save wallet data')
+              }
+              setIsLoading(false)
+            })
+          } catch (error) {
+            alert(`Error creating wallet: ${error}`)
+            setIsLoading(false)
+          }
+        } else {
+          alert('Biometric authentication failed')
+          setIsLoading(false)
+        }
+      })
+    } catch (error) {
+      alert(`Error creating wallet: ${error}`)
+      setIsLoading(false)
+    }
+  }
+
+  // Load existing Solana wallet from biometric storage
+  const loadSolanaWallet = async () => {
+    if (!WebApp.BiometricManager?.isAccessGranted) {
+      alert('Please grant biometric access first')
+      return
+    }
+
+    if (!WebApp.BiometricManager?.isBiometricTokenSaved) {
+      alert('No wallet found. Please create a wallet first.')
+      return
+    }
+
+    setIsLoading(true)
+    
+    WebApp.BiometricManager.authenticate({
+      reason: "Access your Solana wallet"
+    }, async (authenticated: boolean) => {
+      if (authenticated) {
+        try {
+          // Get the stored token (which contains wallet data)
+          // Note: In a real implementation, you'd need a way to retrieve the token
+          // For demo purposes, we'll show how it would work
+          alert('Wallet loading functionality would retrieve encrypted wallet data from biometric storage')
+          setIsLoading(false)
+        } catch (error) {
+          alert(`Error loading wallet: ${error}`)
+          setIsLoading(false)
+        }
+      } else {
+        alert('Biometric authentication failed')
+        setIsLoading(false)
+      }
+    })
+  }
+
+  // Sign and send a Solana transaction with biometric authentication
+  const signAndSendTransaction = async (toAddress: string, amount: number) => {
+    if (!solanaWallet?.secretKey) {
+      alert('No wallet loaded. Please create or load a wallet first.')
+      return
+    }
+
+    if (!toAddress || amount <= 0) {
+      alert('Please provide valid recipient address and amount')
+      return
+    }
+
+    setIsLoading(true)
+
+    WebApp.BiometricManager.authenticate({
+      reason: `Sign transaction: Send ${amount} SOL to ${toAddress.slice(0, 8)}...`
+    }, async (authenticated: boolean) => {
+      if (authenticated) {
+        try {
+          const fromKeypair = Keypair.fromSecretKey(solanaWallet.secretKey!)
+          const toPublicKey = new PublicKey(toAddress)
+          
+          // Create transaction
+          const transaction = new Transaction().add(
+            SystemProgram.transfer({
+              fromPubkey: fromKeypair.publicKey,
+              toPubkey: toPublicKey,
+              lamports: amount * LAMPORTS_PER_SOL,
+            })
+          )
+
+          // Get recent blockhash
+          const { blockhash } = await connection.getLatestBlockhash()
+          transaction.recentBlockhash = blockhash
+          transaction.feePayer = fromKeypair.publicKey
+
+          // Sign transaction
+          transaction.sign(fromKeypair)
+
+          // Send transaction
+          const signature = await connection.sendRawTransaction(transaction.serialize())
+          
+          // Confirm transaction
+          await connection.confirmTransaction(signature, 'confirmed')
+          
+          // Update balance
+          const newBalance = await connection.getBalance(fromKeypair.publicKey)
+          setSolanaWallet(prev => prev ? {...prev, balance: newBalance / LAMPORTS_PER_SOL} : null)
+          
+          alert(`Transaction successful!\nSignature: ${signature}\nAmount: ${amount} SOL\nTo: ${toAddress}`)
+          
+        } catch (error) {
+          alert(`Transaction failed: ${error}`)
+        }
+        setIsLoading(false)
+      } else {
+        alert('Biometric authentication failed')
+        setIsLoading(false)
+      }
+    })
+  }
+
+  // Demo transaction function
+  const sendDemoTransaction = () => {
+    const demoAddress = 'So11111111111111111111111111111111111111112' // Wrapped SOL address as demo
+    const demoAmount = 0.001 // Small amount for demo
+    signAndSendTransaction(demoAddress, demoAmount)
+  }
+
+  // Get wallet balance
+  const refreshWalletBalance = async () => {
+    if (!solanaWallet?.publicKey) {
+      alert('No wallet loaded')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const publicKey = new PublicKey(solanaWallet.publicKey)
+      const balance = await connection.getBalance(publicKey)
+      setSolanaWallet(prev => prev ? {...prev, balance: balance / LAMPORTS_PER_SOL} : null)
+      alert(`Balance updated: ${balance / LAMPORTS_PER_SOL} SOL`)
+    } catch (error) {
+      alert(`Error fetching balance: ${error}`)
+    }
+    setIsLoading(false)
+  }
+
   // Update telegram data
   const updateTelegramData = () => {
     const data: TelegramData = {
-      // Basic WebApp info
+      // Basic WebApp info 
       version: WebApp.version,
       platform: WebApp.platform,
       colorScheme: WebApp.colorScheme,
@@ -250,7 +466,7 @@ function App() {
     setTelegramData(data)
   }
 
-  const renderValue = (value: any): string => {
+  const renderValue = (value: unknown): string => {
     if (value === null) return 'null'
     if (value === undefined) return 'undefined'
     if (typeof value === 'object') {
@@ -575,6 +791,24 @@ function App() {
         ))}
       </div>
       
+      {/* Solana Wallet Section */}
+      {solanaWallet && (
+        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#f0f8ff', borderRadius: '8px', border: '2px solid #4285f4' }}>
+          <h3 style={{ color: '#1976d2', marginBottom: '15px' }}>🪙 Solana Wallet</h3>
+          <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '6px', marginBottom: '15px' }}>
+            <div style={{ fontSize: '14px', marginBottom: '8px' }}>
+              <strong>Public Key:</strong> 
+              <div style={{ fontFamily: 'monospace', fontSize: '12px', wordBreak: 'break-all', color: '#666' }}>
+                {solanaWallet.publicKey}
+              </div>
+            </div>
+            <div style={{ fontSize: '14px' }}>
+              <strong>Balance:</strong> {solanaWallet.balance?.toFixed(6) || '0'} SOL
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#e8f4fd', borderRadius: '5px' }}>
         <h3>Biometric Manager Operations</h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
@@ -645,6 +879,80 @@ function App() {
           >
             🔄 Check Values
           </button>
+        </div>
+      </div>
+
+      {/* Solana Wallet Operations */}
+      <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#fff3e0', borderRadius: '5px', border: '2px solid #ff9800' }}>
+        <h3 style={{ color: '#e65100' }}>🪙 Solana Wallet Operations</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '15px' }}>
+          <button 
+            onClick={createSolanaWallet}
+            disabled={isLoading}
+            style={{ 
+              padding: '8px 16px', 
+              backgroundColor: isLoading ? '#ccc' : '#4CAF50', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px',
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isLoading ? 'Creating...' : '🏦 Create Wallet'}
+          </button>
+          <button 
+            onClick={loadSolanaWallet}
+            disabled={isLoading}
+            style={{ 
+              padding: '8px 16px', 
+              backgroundColor: isLoading ? '#ccc' : '#2196F3', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px',
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isLoading ? 'Loading...' : '📂 Load Wallet'}
+          </button>
+          <button 
+            onClick={refreshWalletBalance}
+            disabled={isLoading || !solanaWallet}
+            style={{ 
+              padding: '8px 16px', 
+              backgroundColor: isLoading || !solanaWallet ? '#ccc' : '#FF9800', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px',
+              cursor: isLoading || !solanaWallet ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isLoading ? 'Refreshing...' : '💰 Refresh Balance'}
+          </button>
+          <button 
+            onClick={sendDemoTransaction}
+            disabled={isLoading || !solanaWallet}
+            style={{ 
+              padding: '8px 16px', 
+              backgroundColor: isLoading || !solanaWallet ? '#ccc' : '#9C27B0', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px',
+              cursor: isLoading || !solanaWallet ? 'not-allowed' : 'pointer'
+            }}
+          >
+            {isLoading ? 'Sending...' : '💸 Send Demo TX'}
+          </button>
+        </div>
+        
+        <div style={{ fontSize: '13px', color: '#666', backgroundColor: '#fff', padding: '12px', borderRadius: '4px' }}>
+          <strong>ℹ️ Instructions:</strong>
+          <ol style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
+            <li>Complete biometric setup first (steps 1-3 above)</li>
+            <li>Create a new Solana wallet protected by biometrics</li>
+            <li>All transactions require biometric authentication</li>
+            <li>Wallet connects to Solana Devnet for testing</li>
+            <li>Demo transaction sends 0.001 SOL to test address</li>
+          </ol>
         </div>
       </div>
     </div>

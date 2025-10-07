@@ -5,6 +5,17 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts:["dea2a9007287.ngrok-free.app"]
-  }
+    allowedHosts:["1fa64e749b22.ngrok-free.app"]
+  },
+  define: {
+    global: 'globalThis',
+  },
+  resolve: {
+    alias: {
+      buffer: 'buffer',
+    },
+  },
+  optimizeDeps: {
+    include: ['buffer'],
+  },
 })

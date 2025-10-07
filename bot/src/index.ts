@@ -12,6 +12,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import dotenv from 'dotenv';
 import path from 'path';
+import { BiometricKeyManager, BiometricUtils, type BiometricSession } from './BiometricKeyManager.js';
 
 dotenv.config();
 
@@ -26,6 +27,8 @@ interface SessionData {
   biometricEnabled?: boolean;
   biometricToken?: string | undefined;
   deviceId?: string | undefined;
+  publicKey?: string | undefined;
+  keyBackup?: string | undefined;
 }
 
 type MyContext = Context & SessionFlavor<SessionData> & ConversationFlavor;
@@ -35,6 +38,14 @@ const BiometricDataSchema = z.object({
   token: z.string(),
   deviceId: z.string(),
   success: z.boolean(),
+  biometricType: z.enum(['finger', 'face', 'unknown']).optional(),
+  generateKeys: z.boolean().optional(),
+});
+
+const KeyGenerationSchema = z.object({
+  biometricToken: z.string(),
+  userId: z.number(),
+  deviceId: z.string(),
   biometricType: z.enum(['finger', 'face', 'unknown']).optional(),
 });
 
@@ -105,7 +116,7 @@ class TelegramBiometricBot {
     this.bot.command('start', async (ctx) => {
       const keyboard = new InlineKeyboard()
         .webApp('🔐 Open Biometric App', this.webAppUrl)
-        .webApp('🎮 Play Game', `https://4db5a9a4491d.ngrok-free.app/game`)
+        .webApp('🎮 Play Game', `${this.webAppUrl}/game`)
         .row()
         .text('ℹ️ About Biometrics', 'about_biometrics');
 
@@ -156,7 +167,7 @@ class TelegramBiometricBot {
           return;
         }
 
-        const { token, deviceId, success, biometricType } = validation.data;
+        const { token, deviceId, success, biometricType, generateKeys } = validation.data;
 
         if (success) {
           // Store biometric data in session
@@ -165,16 +176,51 @@ class TelegramBiometricBot {
           ctx.session.biometricToken = token;
           ctx.session.deviceId = deviceId;
 
+          let publicKey: string | undefined;
+          let keyBackup: string | undefined;
+
+          // Generate private key if requested
+          if (generateKeys) {
+            try {
+              const biometricSession = await BiometricUtils.createBiometricSession(
+                ctx.from.id,
+                deviceId,
+                token,
+                biometricType || 'unknown'
+              );
+              
+              publicKey = biometricSession.publicKey;
+              keyBackup = biometricSession.keyBackup;
+              
+              ctx.session.publicKey = publicKey;
+              ctx.session.keyBackup = keyBackup;
+              
+              console.log('Generated biometric keys for user:', {
+                userId: ctx.from.id,
+                publicKey: publicKey.substring(0, 8) + '...',
+                deviceId: deviceId.substring(0, 8) + '...'
+              });
+            } catch (error) {
+              console.error('Failed to generate biometric keys:', error);
+            }
+          }
+
           const typeEmoji = this.getBiometricEmoji(biometricType);
           
-          await ctx.reply(
-            `✅ Biometric authentication successful!\n\n` +
+          let replyMessage = `✅ Biometric authentication successful!\n\n` +
             `${typeEmoji} **Type**: ${biometricType || 'unknown'}\n` +
             `📱 **Device ID**: ${deviceId.substring(0, 8)}...\n` +
-            `🔐 **Status**: Enabled\n\n` +
-            `Your biometric profile has been securely saved!`,
-            { parse_mode: 'Markdown' }
-          );
+            `🔐 **Status**: Enabled\n`;
+          
+          if (publicKey) {
+            replyMessage += `🔑 **Public Key**: ${publicKey.substring(0, 12)}...\n`;
+            replyMessage += `\n🎉 **Private key generated from your biometric data!**\n`;
+            replyMessage += `Your unique cryptographic keys are now tied to your fingerprint.`;
+          } else {
+            replyMessage += `\nYour biometric profile has been securely saved!`;
+          }
+          
+          await ctx.reply(replyMessage, { parse_mode: 'Markdown' });
         } else {
           await ctx.reply(
             '❌ Biometric authentication failed\n\n' +
@@ -383,7 +429,7 @@ class TelegramBiometricBot {
   public async start() {
 
     this.app.get('/game', (req, res) => {
-      res.sendFile(path.join(__dirname, '../public', 'All.html'));
+      res.sendFile(path.join(__dirname, '../public', 'index.html'));
     });
 
     // Start the web server
